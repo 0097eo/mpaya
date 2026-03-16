@@ -19,6 +19,7 @@ class Command(BaseCommand):
         tech2 = self._create_user('tech2', 'tech2@mpaya.com', User.TECHNICIAN)
 
         tickets = [
+            # ── Pending — demo the full flow live during presentation
             {
                 'title': 'Meter not vending after M-Pesa payment',
                 'description': (
@@ -30,6 +31,7 @@ class Command(BaseCommand):
                 'assigned_to': tech1,
                 'status': Ticket.PENDING,
             },
+            # ── Pending — second pending for tech1
             {
                 'title': 'Keypad unresponsive at Unit 9B',
                 'description': (
@@ -40,6 +42,7 @@ class Command(BaseCommand):
                 'assigned_to': tech1,
                 'status': Ticket.PENDING,
             },
+            # ── In Progress — to demo resolve flow live
             {
                 'title': 'Display showing error code E04',
                 'description': (
@@ -51,6 +54,7 @@ class Command(BaseCommand):
                 'assigned_to': tech1,
                 'status': Ticket.IN_PROGRESS,
             },
+            # ── In Progress — assigned to tech2
             {
                 'title': 'Water meter reading inconsistent',
                 'description': (
@@ -62,6 +66,7 @@ class Command(BaseCommand):
                 'assigned_to': tech2,
                 'status': Ticket.IN_PROGRESS,
             },
+            # ── Resolved — shows full resolution block in detail panel
             {
                 'title': 'Tamper alert triggered at Unit 2C',
                 'description': (
@@ -79,6 +84,7 @@ class Command(BaseCommand):
                 'resolved_meter_serial': 'MTR-2024-003',
                 'resolved_at': timezone.now() - timedelta(hours=4),
             },
+            # ── Resolved — second resolved ticket
             {
                 'title': 'Blank display at Unit 7A',
                 'description': (
@@ -96,6 +102,7 @@ class Command(BaseCommand):
                 'resolved_meter_serial': 'MTR-2024-002',
                 'resolved_at': timezone.now() - timedelta(hours=26),
             },
+            # ── Past due — created 4 days ago, still pending (triggers past due filter)
             {
                 'title': 'Meter casing broken at Unit 5C',
                 'description': (
@@ -122,6 +129,14 @@ class Command(BaseCommand):
                 resolved_at=resolved_at,
             )
             self.stdout.write(self.style.SUCCESS(f"Created ticket: {ticket.title}"))
+
+        # Backdate resolved tickets so created_at is before resolved_at
+        Ticket.objects.filter(meter_serial_number="MTR-2024-003").update(
+            created_at=timezone.now() - timedelta(days=2)
+        )
+        Ticket.objects.filter(meter_serial_number="MTR-2024-002").update(
+            created_at=timezone.now() - timedelta(days=3)
+        )
 
         # Backdate the past-due ticket
         Ticket.objects.filter(meter_serial_number='MTR-2023-019').update(
