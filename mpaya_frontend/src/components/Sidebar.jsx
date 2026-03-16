@@ -55,8 +55,15 @@ export default function Sidebar() {
     <aside className="sidebar">
       {/* Logo */}
       <div className="sidebar-logo">
-        <div className="sidebar-logo-mark">M</div>
-        <span className="sidebar-logo-text">M-Paya Energy</span>
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center">
+            <span className="text-[15px] font-bold text-[#1B3A6B] tracking-tight">m</span>
+            <svg width="10" height="14" viewBox="0 0 10 14" fill="none">
+              <path d="M6 1L1 8h4.5L4 13l6-7H5.5L6 1z" fill="#F97316"/>
+            </svg>
+            <span className="text-[15px] font-bold text-[#1B3A6B] tracking-tight">paya</span>
+          </div>
+        </div>
       </div>
 
       {/* Nav */}

@@ -27,8 +27,13 @@ export default function LoginPage() {
       <div className="login-card">
         {/* Logo */}
         <div className="login-logo">
-          <div className="login-logo-mark">M</div>
-          <p className="login-logo-title">M-Paya Energy</p>
+          <div className="flex items-center justify-center gap-1 mb-3">
+            <span className="text-[26px] font-bold text-[#1B3A6B] tracking-tight">m</span>
+            <svg width="16" height="22" viewBox="0 0 10 14" fill="none">
+              <path d="M6 1L1 8h4.5L4 13l6-7H5.5L6 1z" fill="#F97316"/>
+            </svg>
+            <span className="text-[26px] font-bold text-[#1B3A6B] tracking-tight">paya</span>
+          </div>
           <p className="login-logo-sub">Sign in to your workspace</p>
         </div>
 

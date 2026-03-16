@@ -34,9 +34,13 @@ function MobileHeader({ user, onLogout, isAdmin }) {
 
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b border-[#EAEAE4] bg-[#F5F5F0] md:hidden shrink-0">
-      <span className="text-sm font-semibold text-[#1A1A18]">
-        M-<span className="text-[#F97316]">Paya</span> Energy
-      </span>
+      <div className="flex items-center gap-0.5">
+        <span className="text-[14px] font-bold text-[#1B3A6B] tracking-tight">m</span>
+        <svg width="9" height="12" viewBox="0 0 10 14" fill="none">
+          <path d="M6 1L1 8h4.5L4 13l6-7H5.5L6 1z" fill="#F97316"/>
+        </svg>
+        <span className="text-[14px] font-bold text-[#1B3A6B] tracking-tight">paya</span>
+      </div>
       <div className="relative">
         <button
           onClick={() => setOpen(v => !v)}
