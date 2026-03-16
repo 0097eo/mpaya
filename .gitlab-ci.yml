@@ -1,0 +1,30 @@
+stages:
+  - test
+
+variables:
+  POSTGRES_DB: mpaya_test
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  DATABASE_URL: postgres://postgres:postgres@postgres:5432/mpaya_test
+  SECRET_KEY: ci-secret-key-not-for-production
+  DEBUG: "True"
+
+services:
+  - postgres:15-alpine
+
+test:
+  stage: test
+  image: python:3.11-slim
+
+  before_script:
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+    - cd mpaya_api
+    - python manage.py migrate --no-input
+
+  script:
+    - python manage.py test apps.authentication.tests apps.tickets.tests --verbosity=2
+
+  only:
+    - main
+    - merge_requests
