@@ -85,7 +85,7 @@ function CreateForm({ onSuccess, onCancel }) {
     setSubmitting(true)
     try {
       const res = await api.post('/auth/technicians/', form)
-      onSuccess(res.data.technician)
+      onSuccess(res.data)
     } catch (err) {
       const data = err.response?.data || {}
       const errs = {}
