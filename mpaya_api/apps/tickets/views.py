@@ -220,7 +220,7 @@ class TechnicianListView(generics.ListAPIView):
     """
     permission_classes = [IsAuthenticated, IsAdminOrSupport]
     serializer_class = UserSerializer
-    queryset = User.objects.filter(role=User.TECHNICIAN)
+    queryset = User.objects.filter(role=User.TECHNICIAN, is_active=True)
 
     def get(self, request):
         serializer = self.get_serializer(self.get_queryset(), many=True)
