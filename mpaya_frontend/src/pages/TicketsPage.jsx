@@ -21,10 +21,10 @@ function fmtFull(iso) {
   })
 }
 
-function isPastDue(ticket) {
-  if (ticket.status === 'resolved') return false
-  const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000)
-  return new Date(ticket.created_at) < threeDaysAgo
+function todayLabel() {
+  return new Date().toLocaleDateString('en-KE', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  })
 }
 
 // ── Mobile header ──────────────────────────────────────────────────────────
@@ -44,11 +44,9 @@ function MobileHeader({ user, onLogout, isAdmin }) {
       <div className="relative">
         <button
           onClick={() => setOpen(v => !v)}
-          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg
-                     hover:bg-[#EAEAE4] transition-colors"
+          className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-[#EAEAE4] transition-colors"
         >
-          <div className="w-6 h-6 rounded-full bg-[#F97316] flex items-center
-                          justify-center text-white text-[10px] font-bold shrink-0">
+          <div className="w-6 h-6 rounded-full bg-[#F97316] flex items-center justify-center text-white text-[10px] font-bold shrink-0">
             {user?.username?.slice(0, 2).toUpperCase()}
           </div>
           <span className="text-xs font-medium text-[#52524A]">{user?.username}</span>
@@ -60,37 +58,24 @@ function MobileHeader({ user, onLogout, isAdmin }) {
         {open && (
           <>
             <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-            <div className="absolute right-0 top-full mt-1.5 w-52 bg-white
-                            border border-[#EAEAE4] rounded-xl shadow-md z-40 py-1">
-              {/* User info */}
+            <div className="absolute right-0 top-full mt-1.5 w-52 bg-white border border-[#EAEAE4] rounded-xl shadow-md z-40 py-1">
               <div className="px-3 py-2.5 border-b border-[#EAEAE4]">
                 <p className="text-xs font-semibold text-[#1A1A18]">{user?.username}</p>
                 <p className="text-[10px] text-[#A8A89C] capitalize mt-0.5">{user?.role}</p>
               </div>
-
-              {/* Workspace links */}
               <div className="px-2 py-1 border-b border-[#EAEAE4]">
-                <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-[#C4C4BA]">
-                  Workspace
-                </p>
-                <div
-                  className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg
-                             hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
-                  onClick={() => { setOpen(false); navigate('/tickets') }}
-                >
+                <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-[#C4C4BA]">Workspace</p>
+                <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
+                  onClick={() => { setOpen(false); navigate('/tickets') }}>
                   <svg className="w-3.5 h-3.5 text-[#A8A89C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2
-                         M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                   All Tickets
                 </div>
                 {isAdmin && (
-                  <div
-                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg
-                               hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
-                    onClick={() => { setOpen(false); navigate('/tickets/create') }}
-                  >
+                  <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
+                    onClick={() => { setOpen(false); navigate('/tickets/create') }}>
                     <svg className="w-3.5 h-3.5 text-[#A8A89C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m8-8H4" />
                     </svg>
@@ -98,33 +83,22 @@ function MobileHeader({ user, onLogout, isAdmin }) {
                   </div>
                 )}
                 {isAdmin && (
-                  <div
-                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg
-                               hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
-                    onClick={() => { setOpen(false); navigate('/technicians') }}
-                  >
+                  <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
+                    onClick={() => { setOpen(false); navigate('/technicians') }}>
                     <svg className="w-3.5 h-3.5 text-[#A8A89C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857
-                           M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857
-                           m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                     Technicians
                   </div>
                 )}
               </div>
-
-              {/* Sign out */}
               <div className="px-2 py-1">
-                <div
-                  className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg
-                             hover:bg-red-50 cursor-pointer text-[13px] text-red-500"
-                  onClick={() => { setOpen(false); onLogout() }}
-                >
+                <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-red-50 cursor-pointer text-[13px] text-red-500"
+                  onClick={() => { setOpen(false); onLogout() }}>
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7
-                         a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                   </svg>
                   Sign out
                 </div>
@@ -138,49 +112,50 @@ function MobileHeader({ user, onLogout, isAdmin }) {
 }
 
 // ── Ticket list column ─────────────────────────────────────────────────────
-function TicketList({ tickets, loading, selectedId, onSelect, activeFilter, onFilter }) {
-  const filters = ['all', 'pending', 'in_progress', 'resolved', 'past_due']
-  const fLabel  = {
+function TicketList({ tickets, loading, selectedId, onSelect, activeFilter, onFilter, isTech }) {
+  const filters = isTech
+    ? ['all', 'pending', 'in_progress', 'resolved']
+    : ['all', 'pending', 'in_progress', 'resolved']
+
+  const fLabel = {
     all: 'All', pending: 'Pending',
-    in_progress: 'In Progress', resolved: 'Resolved', past_due: 'Past Due',
+    in_progress: 'In Progress', resolved: 'Resolved',
   }
 
-  const filtered = activeFilter === 'past_due'
-    ? tickets.filter(isPastDue)
-    : activeFilter === 'all'
-      ? tickets
-      : tickets.filter(t => t.status === activeFilter)
+  const filtered = activeFilter === 'all'
+    ? tickets
+    : tickets.filter(t => t.status === activeFilter)
 
   if (loading) return (
     <div className="list-column">
       <div className="list-header">
         <span className="list-header-title">Tickets</span>
       </div>
-      <div className="flex justify-center py-16">
-        <Spinner />
-      </div>
+      <div className="flex justify-center py-16"><Spinner /></div>
     </div>
   )
 
   return (
     <div className="list-column">
       <div className="list-header">
-        <span className="list-header-title">
-          Tickets
-          {filtered.length > 0 && (
-            <span className="count-pill">{filtered.length}</span>
+        <div className="flex flex-col gap-0.5">
+          <span className="list-header-title">
+            Tickets
+            {filtered.length > 0 && (
+              <span className="count-pill">{filtered.length}</span>
+            )}
+          </span>
+          {isTech && (
+            <span className="text-[10px] text-[#A8A89C]">{todayLabel()}</span>
           )}
-        </span>
+        </div>
       </div>
 
       <div className="filter-bar">
         {filters.map(f => (
           <button
             key={f}
-            className={`filter-chip
-              ${activeFilter === f ? 'active' : ''}
-              ${f === 'past_due' && activeFilter !== f ? 'past-due-chip' : ''}
-            `}
+            className={`filter-chip ${activeFilter === f ? 'active' : ''}`}
             onClick={() => onFilter(f)}
           >
             {fLabel[f]}
@@ -194,12 +169,13 @@ function TicketList({ tickets, loading, selectedId, onSelect, activeFilter, onFi
             <div className="empty-icon">
               <svg className="w-5 h-5 text-[#C4C4BA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2
-                     M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
             <p className="text-[13px] font-medium text-[#52524A]">No tickets</p>
-            <p className="text-[12px] mt-0.5">Nothing here yet.</p>
+            <p className="text-[12px] mt-0.5">
+              {isTech ? 'No tickets assigned to you today.' : 'Nothing here yet.'}
+            </p>
           </div>
         ) : (
           filtered.map(ticket => (
@@ -208,14 +184,11 @@ function TicketList({ tickets, loading, selectedId, onSelect, activeFilter, onFi
               className={`ticket-row ${selectedId === ticket.id ? 'selected' : ''}`}
               onClick={() => onSelect(ticket)}
             >
-              <div className="flex items-center gap-1.5 mb-1">
-                {isPastDue(ticket) && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
-                )}
-                <p className="ticket-row-title">{ticket.title}</p>
-              </div>
+              <p className="ticket-row-title">{ticket.title}</p>
               <div className="ticket-row-meta">
-                <span className="ticket-row-serial">{ticket.meter_serial_number}</span>
+                {ticket.meter_serial_number && (
+                  <span className="ticket-row-serial">{ticket.meter_serial_number}</span>
+                )}
                 <StatusBadge status={ticket.status} />
                 <span className="ticket-row-date">{fmt(ticket.created_at)}</span>
               </div>
@@ -238,11 +211,19 @@ function PropRow({ label, children }) {
 }
 
 // ── Detail panel ────────────────────────────────────────────────────────────
-function TicketDetail({ ticket, onRefresh, onClose }) {
+function TicketDetail({ ticket, detailLoading, onRefresh, onClose }) {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [updating, setUpdating] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError]       = useState('')
+
+  if (detailLoading) return (
+    <div className="detail-panel">
+      <div className="flex justify-center items-center h-full">
+        <Spinner />
+      </div>
+    </div>
+  )
 
   if (!ticket) return (
     <div className="detail-panel">
@@ -263,7 +244,6 @@ function TicketDetail({ ticket, onRefresh, onClose }) {
   const isPending    = ticket.status === 'pending'
   const isInProgress = ticket.status === 'in_progress'
   const isResolved   = ticket.status === 'resolved'
-  const overdue      = isPastDue(ticket)
 
   const handleMarkInProgress = async () => {
     setUpdating(true); setError('')
@@ -287,12 +267,6 @@ function TicketDetail({ ticket, onRefresh, onClose }) {
             </button>
           )}
           <StatusBadge status={ticket.status} />
-          {overdue && (
-            <span className="text-[10px] font-medium bg-red-50 text-red-500
-                             border border-red-100 px-2 py-0.5 rounded-full">
-              Past due
-            </span>
-          )}
         </div>
         <div className="text-[11px] text-[#A8A89C]">{fmtFull(ticket.created_at)}</div>
       </div>
@@ -309,7 +283,6 @@ function TicketDetail({ ticket, onRefresh, onClose }) {
 
         <table className="prop-table">
           <tbody>
-            {/* Admin always sees meter serial */}
             {!isTech && (
               <PropRow label="Meter Serial">
                 <span className="prop-mono">{ticket.meter_serial_number}</span>
@@ -318,9 +291,7 @@ function TicketDetail({ ticket, onRefresh, onClose }) {
             {ticket.assigned_to && (
               <PropRow label="Assigned To">
                 <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-[#F97316]/15 flex items-center
-                                  justify-content-center text-[#F97316] text-[9px] font-bold
-                                  flex justify-center">
+                  <div className="w-5 h-5 rounded-full bg-[#F97316]/15 flex items-center justify-center text-[#F97316] text-[9px] font-bold">
                     {ticket.assigned_to.username?.slice(0, 2).toUpperCase()}
                   </div>
                   <span>{ticket.assigned_to.username}</span>
@@ -330,8 +301,7 @@ function TicketDetail({ ticket, onRefresh, onClose }) {
             {ticket.created_by && (
               <PropRow label="Created By">
                 <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-full bg-[#EAEAE4] flex items-center
-                                  justify-center text-[#7A7A70] text-[9px] font-bold">
+                  <div className="w-5 h-5 rounded-full bg-[#EAEAE4] flex items-center justify-center text-[#7A7A70] text-[9px] font-bold">
                     {ticket.created_by.username?.slice(0, 2).toUpperCase()}
                   </div>
                   <span>{ticket.created_by.username}</span>
@@ -354,7 +324,6 @@ function TicketDetail({ ticket, onRefresh, onClose }) {
                 {ticket.resolution_summary}
               </span>
             </div>
-            {/* Technician sees meter serial only after resolution as audit pair */}
             {isTech && (
               <div style={{ display: 'flex', gap: '1rem', padding: '6px 0', borderBottom: '1px solid #D4EDDA' }}>
                 <span className="prop-label" style={{ color: '#2D6A4F', opacity: 0.8 }}>Meter Serial</span>
@@ -371,8 +340,7 @@ function TicketDetail({ ticket, onRefresh, onClose }) {
         )}
 
         {error && (
-          <div className="text-red-500 text-[12px] bg-red-50 border border-red-100
-                          rounded-lg px-3 py-2 mb-4">
+          <div className="text-red-500 text-[12px] bg-red-50 border border-red-100 rounded-lg px-3 py-2 mb-4">
             {error}
           </div>
         )}
@@ -391,10 +359,7 @@ function TicketDetail({ ticket, onRefresh, onClose }) {
             </button>
           )}
           {isInProgress && (
-            <button
-              className="btn btn-orange"
-              onClick={() => navigate(`/tickets/${ticket.id}/resolve`)}
-            >
+            <button className="btn btn-orange" onClick={() => navigate(`/tickets/${ticket.id}/resolve`)}>
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
@@ -418,18 +383,20 @@ function TicketDetail({ ticket, onRefresh, onClose }) {
 // ── Main page ───────────────────────────────────────────────────────────────
 export default function TicketsPage() {
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { id }   = useParams()
+  const navigate  = useNavigate()
+  const location  = useLocation()
+  const { id }    = useParams()
 
   const [tickets, setTickets]           = useState([])
   const [selected, setSelected]         = useState(null)
   const [loading, setLoading]           = useState(true)
+  const [detailLoading, setDetailLoading] = useState(false)
   const [filter, setFilter]             = useState('all')
   const [toast, setToast]               = useState('')
   const [mobileDetail, setMobileDetail] = useState(false)
 
   const isAdmin = user?.role === 'admin'
+  const isTech  = user?.role === 'technician'
 
   const handleLogout = async () => {
     await logout()
@@ -444,14 +411,22 @@ export default function TicketsPage() {
         setTickets(list)
 
         if (id) {
+          setDetailLoading(true)
           try {
             const detail = await api.get(`/tickets/${id}/`)
             setSelected(detail.data)
             setMobileDetail(true)
-          } catch {}
+          } catch (e) {
+            console.error('Failed to load ticket detail:', e)
+          } finally {
+            setDetailLoading(false)
+          }
         }
-      } catch {}
-      finally { setLoading(false) }
+      } catch (e) {
+        console.error('Failed to load tickets:', e)
+      } finally {
+        setLoading(false)
+      }
     }
     load()
   }, [id])
@@ -464,13 +439,18 @@ export default function TicketsPage() {
   }, [location])
 
   const handleSelect = async (ticket) => {
-    setSelected(ticket)
+    setSelected(null)
+    setDetailLoading(true)
     setMobileDetail(true)
     navigate(`/tickets/${ticket.id}`, { replace: true })
     try {
       const res = await api.get(`/tickets/${ticket.id}/`)
       setSelected(res.data)
-    } catch {}
+    } catch (e) {
+      console.error('Failed to load ticket detail:', e)
+    } finally {
+      setDetailLoading(false)
+    }
   }
 
   const handleRefresh = async () => {
@@ -482,16 +462,16 @@ export default function TicketsPage() {
         const detail = await api.get(`/tickets/${selected.id}/`)
         setSelected(detail.data)
       }
-    } catch {}
+    } catch (e) {
+      console.error('Refresh failed:', e)
+    }
   }
 
   return (
     <div className="app-shell">
-      {/* Sidebar — hidden on mobile via CSS */}
       <Sidebar />
 
       <div className="flex flex-col flex-1 overflow-hidden">
-        {/* Mobile header — hidden on md+ via CSS */}
         <MobileHeader user={user} onLogout={handleLogout} isAdmin={isAdmin} />
 
         <div className="main-area">
@@ -502,13 +482,19 @@ export default function TicketsPage() {
             onSelect={handleSelect}
             activeFilter={filter}
             onFilter={setFilter}
+            isTech={isTech}
           />
 
           <div className={`detail-panel ${mobileDetail ? 'visible-mobile' : 'hidden-mobile'} md:flex md:translate-x-0`}>
             <TicketDetail
               ticket={selected}
+              detailLoading={detailLoading}
               onRefresh={handleRefresh}
-              onClose={() => { setMobileDetail(false); setSelected(null); navigate('/tickets', { replace: true }) }}
+              onClose={() => {
+                setMobileDetail(false)
+                setSelected(null)
+                navigate('/tickets', { replace: true })
+              }}
             />
           </div>
         </div>
