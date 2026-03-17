@@ -65,7 +65,6 @@ function MobileHeader({ user, onLogout, isAdmin, isSupport }) {
               </div>
               <div className="px-2 py-1 border-b border-[#EAEAE4]">
                 <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-[#C4C4BA]">Workspace</p>
-
                 <div
                   className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
                   onClick={() => { setOpen(false); navigate('/tickets') }}
@@ -76,7 +75,6 @@ function MobileHeader({ user, onLogout, isAdmin, isSupport }) {
                   </svg>
                   All Tickets
                 </div>
-
                 {canCreateTicket && (
                   <div
                     className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
@@ -88,7 +86,6 @@ function MobileHeader({ user, onLogout, isAdmin, isSupport }) {
                     New Ticket
                   </div>
                 )}
-
                 {isAdmin && (
                   <div
                     className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
@@ -131,15 +128,11 @@ function AdminFilters({ filters, onChange, onClear, hasActive }) {
           Filters
         </span>
         {hasActive && (
-          <button
-            onClick={onClear}
-            className="text-[10px] text-[#F97316] font-medium hover:underline"
-          >
+          <button onClick={onClear} className="text-[10px] text-[#F97316] font-medium hover:underline">
             Clear
           </button>
         )}
       </div>
-
       <div className="flex gap-1.5 flex-wrap">
         {['all', 'pending', 'in_progress', 'resolved'].map(s => (
           <button
@@ -153,7 +146,6 @@ function AdminFilters({ filters, onChange, onClear, hasActive }) {
           </button>
         ))}
       </div>
-
       <div className="flex gap-2">
         <div className="relative flex-1">
           <input
@@ -199,16 +191,9 @@ function AdminFilters({ filters, onChange, onClear, hasActive }) {
 
 // ── Ticket list column ─────────────────────────────────────────────────────
 function TicketList({
-  tickets,
-  loading,
-  selectedId,
-  onSelect,
-  isTech,
-  adminFilters,
-  onAdminFilterChange,
-  onAdminFilterClear,
-  pagination,
-  onPageChange,
+  tickets, loading, selectedId, onSelect, isTech,
+  adminFilters, onAdminFilterChange, onAdminFilterClear,
+  pagination, onPageChange,
 }) {
   const techFilters = ['all', 'pending', 'in_progress', 'resolved']
   const fLabel = { all: 'All', pending: 'Pending', in_progress: 'In Progress', resolved: 'Resolved' }
@@ -223,9 +208,7 @@ function TicketList({
 
   if (loading) return (
     <div className="list-column">
-      <div className="list-header">
-        <span className="list-header-title">Tickets</span>
-      </div>
+      <div className="list-header"><span className="list-header-title">Tickets</span></div>
       <div className="flex justify-center py-16"><Spinner /></div>
     </div>
   )
@@ -242,9 +225,7 @@ function TicketList({
               <span className="count-pill">{displayed.length}</span>
             ) : null}
           </span>
-          {isTech && (
-            <span className="text-[10px] text-[#A8A89C]">{todayLabel()}</span>
-          )}
+          {isTech && <span className="text-[10px] text-[#A8A89C]">{todayLabel()}</span>}
         </div>
       </div>
 
@@ -297,6 +278,13 @@ function TicketList({
                 {ticket.meter_serial_number && (
                   <span className="ticket-row-serial">{ticket.meter_serial_number}</span>
                 )}
+                {/* Unassigned badge — only visible to admin/support since techs never see unassigned */}
+                {!isTech && !ticket.assigned_to && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px]
+                                   font-medium bg-amber-50 text-amber-600 border border-amber-200">
+                    Unassigned
+                  </span>
+                )}
                 <StatusBadge status={ticket.status} />
                 <span className="ticket-row-date">{fmt(ticket.created_at)}</span>
               </div>
@@ -347,18 +335,110 @@ function PropRow({ label, children }) {
   )
 }
 
+// ── Assign dropdown (admin/support only) ───────────────────────────────────
+function AssignDropdown({ ticket, onAssigned }) {
+  const [technicians, setTechnicians] = useState([])
+  const [open, setOpen]               = useState(false)
+  const [assigning, setAssigning]     = useState(false)
+  const [error, setError]             = useState('')
+
+  useEffect(() => {
+    api.get('/tickets/technicians/')
+      .then(res => setTechnicians(res.data.results ?? res.data))
+      .catch(() => {})
+  }, [])
+
+  const handleAssign = async (tech) => {
+    setOpen(false)
+    setAssigning(true)
+    setError('')
+    try {
+      await api.patch(`/tickets/${ticket.id}/assign/`, { assigned_to: tech.id })
+      onAssigned()
+    } catch (e) {
+      setError(e.response?.data?.message || 'Failed to assign.')
+    } finally {
+      setAssigning(false)
+    }
+  }
+
+  const isReassign = !!ticket.assigned_to
+  const label      = isReassign ? 'Reassign' : 'Assign Technician'
+
+  return (
+    <div className="relative">
+      <button
+        className="btn btn-ghost text-[13px] border border-[#EAEAE4]"
+        onClick={() => setOpen(v => !v)}
+        disabled={assigning}
+      >
+        {assigning ? <Spinner /> : (
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        )}
+        {assigning ? 'Assigning...' : label}
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute bottom-full mb-1.5 left-0 w-52 bg-white border
+                          border-[#EAEAE4] rounded-xl shadow-md z-20 overflow-hidden">
+            <div className="px-3 py-2 border-b border-[#EAEAE4]">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#A8A89C]">
+                {isReassign ? 'Reassign to' : 'Assign to'}
+              </p>
+            </div>
+            {technicians.length === 0 ? (
+              <div className="px-3 py-2.5 text-[12px] text-[#A8A89C]">No technicians available</div>
+            ) : (
+              technicians.map(t => (
+                <div
+                  key={t.id}
+                  onClick={() => handleAssign(t)}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer
+                              transition-colors hover:bg-[#F5F5F0] text-[13px]
+                              ${ticket.assigned_to?.id === t.id
+                                ? 'text-[#F97316] font-medium bg-[#FFF7F0]'
+                                : 'text-[#1A1A18]'
+                              }`}
+                >
+                  <div className="w-6 h-6 rounded-full bg-[#F97316]/15 flex items-center
+                                  justify-center text-[#F97316] text-[9px] font-bold shrink-0">
+                    {t.username.slice(0, 2).toUpperCase()}
+                  </div>
+                  {t.username}
+                  {ticket.assigned_to?.id === t.id && (
+                    <svg className="w-3 h-3 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </>
+      )}
+
+      {error && (
+        <p className="text-[11px] text-red-500 mt-1">{error}</p>
+      )}
+    </div>
+  )
+}
+
 // ── Detail panel ────────────────────────────────────────────────────────────
 function TicketDetail({ ticket, detailLoading, onRefresh, onClose }) {
   const { user } = useAuth()
-  const navigate = useNavigate()
+  const navigate  = useNavigate()
   const [updating, setUpdating] = useState(false)
   const [error, setError]       = useState('')
 
   if (detailLoading) return (
     <div className="detail-panel">
-      <div className="flex justify-center items-center h-full">
-        <Spinner />
-      </div>
+      <div className="flex justify-center items-center h-full"><Spinner /></div>
     </div>
   )
 
@@ -380,9 +460,11 @@ function TicketDetail({ ticket, detailLoading, onRefresh, onClose }) {
   const isTech       = user?.role === 'technician'
   const isSupport    = user?.role === 'support'
   const isAdmin      = user?.role === 'admin'
+  const canManage    = isAdmin || isSupport
   const isPending    = ticket.status === 'pending'
   const isInProgress = ticket.status === 'in_progress'
   const isResolved   = ticket.status === 'resolved'
+  const isUnassigned = !ticket.assigned_to
 
   const handleMarkInProgress = async () => {
     setUpdating(true); setError('')
@@ -406,6 +488,13 @@ function TicketDetail({ ticket, detailLoading, onRefresh, onClose }) {
             </button>
           )}
           <StatusBadge status={ticket.status} />
+          {/* Unassigned badge in topbar */}
+          {canManage && isUnassigned && (
+            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px]
+                             font-medium bg-amber-50 text-amber-600 border border-amber-200">
+              Unassigned
+            </span>
+          )}
         </div>
         <div className="text-[11px] text-[#A8A89C]">{fmtFull(ticket.created_at)}</div>
       </div>
@@ -422,22 +511,23 @@ function TicketDetail({ ticket, detailLoading, onRefresh, onClose }) {
 
         <table className="prop-table">
           <tbody>
-            {/* Meter serial visible to admin and support, hidden from technician until resolved */}
             {(isAdmin || isSupport) && (
               <PropRow label="Meter Serial">
                 <span className="prop-mono">{ticket.meter_serial_number}</span>
               </PropRow>
             )}
-            {ticket.assigned_to && (
-              <PropRow label="Assigned To">
+            <PropRow label="Assigned To">
+              {ticket.assigned_to ? (
                 <div className="flex items-center gap-2">
                   <div className="w-5 h-5 rounded-full bg-[#F97316]/15 flex items-center justify-center text-[#F97316] text-[9px] font-bold">
                     {ticket.assigned_to.username?.slice(0, 2).toUpperCase()}
                   </div>
                   <span>{ticket.assigned_to.username}</span>
                 </div>
-              </PropRow>
-            )}
+              ) : (
+                <span className="text-[#A8A89C] italic text-[12px]">Not yet assigned</span>
+              )}
+            </PropRow>
             {ticket.created_by && (
               <PropRow label="Created By">
                 <div className="flex items-center gap-2">
@@ -486,10 +576,11 @@ function TicketDetail({ ticket, detailLoading, onRefresh, onClose }) {
         )}
       </div>
 
-      {/* Action bar — technician actions only */}
-      {isTech && (
+      {/* Action bar */}
+      {(isTech || canManage) && (
         <div className="action-bar">
-          {isPending && (
+          {/* Technician actions */}
+          {isTech && isPending && (
             <button className="btn btn-orange" onClick={handleMarkInProgress} disabled={updating}>
               {updating ? <Spinner /> : (
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
@@ -499,7 +590,7 @@ function TicketDetail({ ticket, detailLoading, onRefresh, onClose }) {
               Mark In Progress
             </button>
           )}
-          {isInProgress && (
+          {isTech && isInProgress && (
             <button className="btn btn-orange" onClick={() => navigate(`/tickets/${ticket.id}/resolve`)}>
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -507,13 +598,18 @@ function TicketDetail({ ticket, detailLoading, onRefresh, onClose }) {
               Resolve Ticket
             </button>
           )}
-          {isResolved && (
+          {isTech && isResolved && (
             <div className="flex items-center gap-2 text-emerald-600 text-[13px] font-medium">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
               Resolved
             </div>
+          )}
+
+          {/* Admin/Support assign action — not shown on resolved tickets */}
+          {canManage && !isResolved && (
+            <AssignDropdown ticket={ticket} onAssigned={onRefresh} />
           )}
         </div>
       )}
@@ -556,7 +652,6 @@ export default function TicketsPage() {
 
   const fetchTickets = async (filters = adminFilters, page = 1) => {
     try {
-      // Technicians get no filter params — backend scopes to today's assigned tickets
       const params = isTech ? {} : buildParams(filters)
       if (page > 1) params.page = page
       const res  = await api.get('/tickets/', { params })
@@ -576,7 +671,6 @@ export default function TicketsPage() {
     const load = async () => {
       const list = await fetchTickets()
       setTickets(list)
-
       if (id) {
         setDetailLoading(true)
         try {
@@ -589,7 +683,6 @@ export default function TicketsPage() {
           setDetailLoading(false)
         }
       }
-
       setLoading(false)
     }
     load()
@@ -654,7 +747,6 @@ export default function TicketsPage() {
   return (
     <div className="app-shell">
       <Sidebar />
-
       <div className="flex flex-col flex-1 overflow-hidden">
         <MobileHeader
           user={user}
@@ -662,7 +754,6 @@ export default function TicketsPage() {
           isAdmin={isAdmin}
           isSupport={isSupport}
         />
-
         <div className="main-area">
           <TicketList
             tickets={tickets}
@@ -676,7 +767,6 @@ export default function TicketsPage() {
             pagination={pagination}
             onPageChange={handlePageChange}
           />
-
           <div className={`detail-panel ${mobileDetail ? 'visible-mobile' : 'hidden-mobile'} md:flex md:translate-x-0`}>
             <TicketDetail
               ticket={selected}
@@ -691,7 +781,6 @@ export default function TicketsPage() {
           </div>
         </div>
       </div>
-
       {toast && <Toast message={toast} onClose={() => setToast('')} />}
     </div>
   )
