@@ -19,7 +19,7 @@ export default function CreateTicketPage() {
 
   useEffect(() => {
     api.get('/tickets/technicians/')
-      .then(res => setTechnicians(res.data))
+      .then(res => setTechnicians(res.data.results ?? res.data))
       .finally(() => setLoadingTechs(false))
   }, [])
 
@@ -27,7 +27,10 @@ export default function CreateTicketPage() {
     e.preventDefault()
     setErrors({}); setSubmitting(true)
     try {
-      await api.post('/tickets/', form)
+      // Only include assigned_to if one was selected
+      const payload = { ...form }
+      if (!payload.assigned_to) delete payload.assigned_to
+      await api.post('/tickets/', payload)
       navigate('/tickets', { state: { toast: 'Ticket created successfully.' } })
     } catch (err) {
       const data = err.response?.data || {}
@@ -109,8 +112,13 @@ export default function CreateTicketPage() {
               )}
             </div>
 
+            {/* Technician dropdown — optional */}
             <div className="field-wrap">
-              <label className="field-label">Assign To</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="field-label mb-0">Assign To</label>
+                <span className="text-[10px] text-[#A8A89C]">Optional — can be assigned later</span>
+              </div>
+
               {loadingTechs ? (
                 <div className="flex items-center gap-2 text-[#A8A89C] text-[12px] py-2">
                   <Spinner /> Loading technicians...
@@ -123,7 +131,7 @@ export default function CreateTicketPage() {
                     onClick={() => setTechOpen(v => !v)}
                   >
                     <span className={selectedTech ? 'text-[#1A1A18]' : 'text-[#A8A89C]'}>
-                      {selectedTech ? selectedTech.username : 'Select a technician'}
+                      {selectedTech ? selectedTech.username : 'Unassigned — assign later'}
                     </span>
                     <svg
                       className={`w-4 h-4 text-[#A8A89C] shrink-0 transition-transform duration-150
@@ -139,6 +147,22 @@ export default function CreateTicketPage() {
                       <div className="fixed inset-0 z-10" onClick={() => setTechOpen(false)} />
                       <div className="absolute top-full left-0 right-0 mt-1 bg-white border
                                       border-[#EAEAE4] rounded-lg shadow-md z-20 overflow-hidden">
+
+                        {/* Unassigned option */}
+                        <div
+                          className={`px-3 py-2.5 text-[13px] cursor-pointer transition-colors
+                            ${!form.assigned_to
+                              ? 'bg-[#FFEDD5] text-[#F97316] font-medium'
+                              : 'text-[#A8A89C] hover:bg-[#F5F5F0]'
+                            }`}
+                          onClick={() => {
+                            setForm({ ...form, assigned_to: '' })
+                            setTechOpen(false)
+                          }}
+                        >
+                          Unassigned — assign later
+                        </div>
+
                         {technicians.length === 0 ? (
                           <div className="px-3 py-2.5 text-[12px] text-[#A8A89C]">
                             No technicians available
