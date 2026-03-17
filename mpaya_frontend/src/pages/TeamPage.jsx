@@ -12,32 +12,29 @@ function fmtDate(iso) {
   })
 }
 
-function InitialsAvatar({ name, size = 'md' }) {
+function InitialsAvatar({ name, color = 'orange' }) {
   const initials = (name || '?').slice(0, 2).toUpperCase()
-  const sz = size === 'sm'
-    ? 'w-7 h-7 text-[10px]'
-    : 'w-9 h-9 text-[12px]'
+  const bg = color === 'blue' ? 'bg-[#1B3A6B]' : 'bg-[#F97316]'
   return (
-    <div className={`${sz} rounded-full bg-[#F97316] flex items-center
-                     justify-center text-white font-semibold shrink-0`}>
+    <div className={`w-9 h-9 rounded-full ${bg} flex items-center
+                     justify-center text-white text-[12px] font-semibold shrink-0`}>
       {initials}
     </div>
   )
 }
 
-function ConfirmModal({ technician, onConfirm, onCancel, loading }) {
+function ConfirmModal({ user, role, onConfirm, onCancel, loading }) {
+  const label = role === 'support' ? 'support user' : 'technician'
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/20"
       onClick={onCancel}
     >
       <div
-        className="bg-white rounded-2xl border border-[#EAEAE4] shadow-lg
-                   p-6 w-full max-w-sm mx-4"
+        className="bg-white rounded-2xl border border-[#EAEAE4] shadow-lg p-6 w-full max-w-sm mx-4"
         onClick={e => e.stopPropagation()}
       >
-        <div className="w-10 h-10 rounded-full bg-red-50 flex items-center
-                        justify-center mb-4">
+        <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center mb-4">
           <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4
@@ -45,19 +42,15 @@ function ConfirmModal({ technician, onConfirm, onCancel, loading }) {
           </svg>
         </div>
         <h3 className="text-[15px] font-semibold text-[#1A1A18] mb-1.5">
-          Deactivate technician?
+          Deactivate {label}?
         </h3>
         <p className="text-[13px] text-[#7A7A70] mb-5 leading-relaxed">
-          <span className="font-medium text-[#1A1A18]">{technician?.username}</span> will
-          no longer be able to log in or be assigned tickets. This can be reversed
-          from the Django admin.
+          <span className="font-medium text-[#1A1A18]">{user?.username}</span> will
+          no longer be able to log in{role === 'technician' ? ' or be assigned tickets' : ''}. This can be
+          reversed from the Django admin.
         </p>
         <div className="flex gap-2.5">
-          <button
-            className="flex-1 btn btn-ghost text-[13px]"
-            onClick={onCancel}
-            disabled={loading}
-          >
+          <button className="flex-1 btn btn-ghost text-[13px]" onClick={onCancel} disabled={loading}>
             Cancel
           </button>
           <button
@@ -73,18 +66,21 @@ function ConfirmModal({ technician, onConfirm, onCancel, loading }) {
   )
 }
 
-function CreateForm({ onSuccess, onCancel }) {
-  const [form, setForm] = useState({ username: '', email: '', password: '' })
-  const [errors, setErrors] = useState({})
+function CreateForm({ role, onSuccess, onCancel }) {
+  const [form, setForm]       = useState({ username: '', email: '', password: '' })
+  const [errors, setErrors]   = useState({})
   const [submitting, setSubmitting] = useState(false)
-  const [showPw, setShowPw] = useState(false)
+  const [showPw, setShowPw]   = useState(false)
+
+  const endpoint = role === 'support' ? '/auth/support/' : '/auth/technicians/'
+  const label    = role === 'support' ? 'Support User' : 'Technician'
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErrors({})
     setSubmitting(true)
     try {
-      const res = await api.post('/auth/technicians/', form)
+      const res = await api.post(endpoint, form)
       onSuccess(res.data)
     } catch (err) {
       const data = err.response?.data || {}
@@ -101,11 +97,8 @@ function CreateForm({ onSuccess, onCancel }) {
   return (
     <div className="bg-[#FAFAF8] border border-[#EAEAE4] rounded-xl p-5 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-[13px] font-semibold text-[#1A1A18]">New Technician</h3>
-        <button
-          onClick={onCancel}
-          className="text-[#A8A89C] hover:text-[#52524A] transition-colors"
-        >
+        <h3 className="text-[13px] font-semibold text-[#1A1A18]">New {label}</h3>
+        <button onClick={onCancel} className="text-[#A8A89C] hover:text-[#52524A] transition-colors">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -113,8 +106,7 @@ function CreateForm({ onSuccess, onCancel }) {
       </div>
 
       {errors.non_field_errors && (
-        <div className="bg-red-50 border border-red-100 text-red-500 text-[12px]
-                        rounded-lg px-3 py-2.5 mb-4">
+        <div className="bg-red-50 border border-red-100 text-red-500 text-[12px] rounded-lg px-3 py-2.5 mb-4">
           {errors.non_field_errors}
         </div>
       )}
@@ -126,7 +118,7 @@ function CreateForm({ onSuccess, onCancel }) {
             <input
               className="field-input"
               type="text"
-              placeholder="e.g. jmwangi"
+              placeholder={role === 'support' ? 'e.g. support.wanjiku' : 'e.g. jmwangi'}
               value={form.username}
               onChange={e => setForm({ ...form, username: e.target.value })}
               required
@@ -140,7 +132,7 @@ function CreateForm({ onSuccess, onCancel }) {
             <input
               className="field-input"
               type="email"
-              placeholder="technician@mpaya.com"
+              placeholder={role === 'support' ? 'support@mpaya.com' : 'technician@mpaya.com'}
               value={form.email}
               onChange={e => setForm({ ...form, email: e.target.value })}
             />
@@ -163,8 +155,7 @@ function CreateForm({ onSuccess, onCancel }) {
             <button
               type="button"
               onClick={() => setShowPw(v => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2
-                         text-[#A8A89C] hover:text-[#52524A] transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#A8A89C] hover:text-[#52524A] transition-colors"
             >
               {showPw ? (
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,7 +190,7 @@ function CreateForm({ onSuccess, onCancel }) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             )}
-            {submitting ? 'Creating...' : 'Create Technician'}
+            {submitting ? 'Creating...' : `Create ${label}`}
           </button>
         </div>
       </form>
@@ -207,45 +198,60 @@ function CreateForm({ onSuccess, onCancel }) {
   )
 }
 
-export default function TechniciansPage() {
+export default function TeamPage() {
   const navigate = useNavigate()
-  const [technicians, setTechnicians] = useState([])
-  const [loading, setLoading]         = useState(true)
-  const [showForm, setShowForm]       = useState(false)
+  const [tab, setTab]                     = useState('technician')  // 'technician' | 'support'
+  const [technicians, setTechnicians]     = useState([])
+  const [supportUsers, setSupportUsers]   = useState([])
+  const [loading, setLoading]             = useState(true)
+  const [showForm, setShowForm]           = useState(false)
   const [confirmTarget, setConfirmTarget] = useState(null)
   const [deactivating, setDeactivating]   = useState(false)
-  const [toast, setToast]             = useState('')
+  const [toast, setToast]                 = useState('')
 
-  const fetchTechnicians = async () => {
+  const fetchAll = async () => {
+    setLoading(true)
     try {
-      const res = await api.get('/auth/technicians/')
-      setTechnicians(res.data.results ?? res.data)
+      const [techRes, supportRes] = await Promise.all([
+        api.get('/auth/technicians/'),
+        api.get('/auth/support/'),
+      ])
+      setTechnicians(techRes.data.results ?? techRes.data)
+      setSupportUsers(supportRes.data.results ?? supportRes.data)
+      
     } catch {}
     finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchTechnicians() }, [])
+  useEffect(() => { fetchAll() }, [])
 
-  const handleCreated = (newTech) => {
-    setTechnicians(prev => [newTech, ...prev])
+  const activeList   = tab === 'technician' ? technicians : supportUsers
+  const setActiveList = tab === 'technician' ? setTechnicians : setSupportUsers
+  const deactivateEndpoint = tab === 'technician' ? '/auth/technicians/' : '/auth/support/'
+
+  const handleCreated = (newUser) => {
+    if (!newUser) return
+    setActiveList(prev => [newUser, ...prev])
     setShowForm(false)
-    setToast(`${newTech.username} added successfully.`)
+    setToast(`${newUser.username} added successfully.`)
   }
 
   const handleDeactivate = async () => {
     setDeactivating(true)
     try {
-      await api.delete(`/auth/technicians/${confirmTarget.id}/`)
-      setTechnicians(prev => prev.filter(t => t.id !== confirmTarget.id))
+      await api.delete(`${deactivateEndpoint}${confirmTarget.id}/`)
+      setActiveList(prev => prev.filter(u => u.id !== confirmTarget.id))
       setToast(`${confirmTarget.username} has been deactivated.`)
       setConfirmTarget(null)
     } catch {
-      setToast('Failed to deactivate technician.')
+      setToast('Failed to deactivate.')
       setConfirmTarget(null)
     } finally {
       setDeactivating(false)
     }
   }
+
+  const tabLabel = tab === 'technician' ? 'Technician' : 'Support'
 
   return (
     <div className="app-shell">
@@ -253,8 +259,7 @@ export default function TechniciansPage() {
 
       <div className="flex flex-col flex-1 overflow-hidden bg-white">
         {/* Top bar */}
-        <div className="flex items-center justify-between px-6 py-3.5
-                        border-b border-[#EAEAE4] shrink-0">
+        <div className="flex items-center justify-between px-6 py-3.5 border-b border-[#EAEAE4] shrink-0">
           <div className="flex items-center gap-3">
             <button
               className="btn btn-ghost btn-sm p-1.5 md:hidden"
@@ -265,11 +270,9 @@ export default function TechniciansPage() {
               </svg>
             </button>
             <div>
-              <h1 className="text-[15px] font-semibold text-[#1A1A18] leading-tight">
-                Technicians
-              </h1>
+              <h1 className="text-[15px] font-semibold text-[#1A1A18] leading-tight">Team</h1>
               <p className="text-[11px] text-[#A8A89C] mt-0.5">
-                {technicians.length} member{technicians.length !== 1 ? 's' : ''}
+                {activeList.length} {tabLabel.toLowerCase()}{activeList.length !== 1 ? 's' : ''}
               </p>
             </div>
           </div>
@@ -280,15 +283,39 @@ export default function TechniciansPage() {
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Add Technician
+            Add {tabLabel}
           </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-0 border-b border-[#EAEAE4] px-6 shrink-0">
+          {[
+            { key: 'technician', label: 'Technicians', count: technicians.length },
+            { key: 'support',    label: 'Support',     count: supportUsers.length },
+          ].map(t => (
+            <button
+              key={t.key}
+              onClick={() => { setTab(t.key); setShowForm(false) }}
+              className={`px-4 py-2.5 text-[13px] font-medium border-b-2 transition-colors -mb-px
+                ${tab === t.key
+                  ? 'border-[#F97316] text-[#F97316]'
+                  : 'border-transparent text-[#A8A89C] hover:text-[#52524A]'
+                }`}
+            >
+              {t.label}
+              <span className={`ml-1.5 text-[11px] px-1.5 py-0.5 rounded-full
+                ${tab === t.key ? 'bg-[#FFF0E6] text-[#F97316]' : 'bg-[#F5F5F0] text-[#A8A89C]'}`}>
+                {t.count}
+              </span>
+            </button>
+          ))}
         </div>
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 max-w-2xl">
-
           {showForm && (
             <CreateForm
+              role={tab}
               onSuccess={handleCreated}
               onCancel={() => setShowForm(false)}
             />
@@ -296,10 +323,9 @@ export default function TechniciansPage() {
 
           {loading ? (
             <div className="flex justify-center py-20"><Spinner /></div>
-          ) : technicians.length === 0 ? (
+          ) : activeList.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <div className="w-12 h-12 bg-[#F0F0EA] rounded-2xl flex items-center
-                              justify-center mb-4">
+              <div className="w-12 h-12 bg-[#F0F0EA] rounded-2xl flex items-center justify-center mb-4">
                 <svg className="w-5 h-5 text-[#C4C4BA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                     d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857
@@ -307,55 +333,42 @@ export default function TechniciansPage() {
                        m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
-              <p className="text-[13px] font-medium text-[#52524A]">No technicians yet</p>
+              <p className="text-[13px] font-medium text-[#52524A]">No {tabLabel.toLowerCase()}s yet</p>
               <p className="text-[12px] text-[#A8A89C] mt-1">
-                Add a technician to start assigning tickets.
+                {tab === 'technician'
+                  ? 'Add a technician to start assigning tickets.'
+                  : 'Add a support user to start logging tickets.'}
               </p>
             </div>
           ) : (
             <div className="divide-y divide-[#F5F5F0]">
-              {/* Header row */}
               <div className="grid grid-cols-[1fr_1fr_auto] gap-4 px-3 py-2">
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-[#A8A89C]">
-                  Username
-                </span>
-                <span className="text-[10px] font-semibold uppercase tracking-widest text-[#A8A89C]">
-                  Joined
-                </span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-[#A8A89C]">Username</span>
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-[#A8A89C]">Joined</span>
                 <span className="w-8" />
               </div>
 
-              {technicians.map(tech => (
+              {activeList.map(u => (
                 <div
-                  key={tech.id}
+                  key={u.id}
                   className="grid grid-cols-[1fr_1fr_auto] gap-4 items-center
                              px-3 py-3.5 hover:bg-[#FAFAF8] rounded-lg transition-colors"
                 >
-                  {/* Identity */}
                   <div className="flex items-center gap-3 min-w-0">
-                    <InitialsAvatar name={tech.username} />
+                    <InitialsAvatar name={u.username} color={tab === 'support' ? 'blue' : 'orange'} />
                     <div className="min-w-0">
-                      <p className="text-[13px] font-medium text-[#1A1A18] truncate">
-                        {tech.username}
-                      </p>
-                      <p className="text-[11px] text-[#A8A89C] truncate">
-                        {tech.email || 'No email'}
-                      </p>
+                      <p className="text-[13px] font-medium text-[#1A1A18] truncate">{u.username}</p>
+                      <p className="text-[11px] text-[#A8A89C] truncate">{u.email || 'No email'}</p>
                     </div>
                   </div>
 
-                  {/* Joined */}
-                  <span className="text-[12px] text-[#7A7A70]">
-                    {fmtDate(tech.date_joined)}
-                  </span>
+                  <span className="text-[12px] text-[#7A7A70]">{fmtDate(u.date_joined)}</span>
 
-                  {/* Actions */}
                   <button
-                    onClick={() => setConfirmTarget(tech)}
+                    onClick={() => setConfirmTarget(u)}
                     className="w-8 h-8 flex items-center justify-center rounded-lg
-                               text-[#C4C4BA] hover:bg-red-50 hover:text-red-400
-                               transition-colors"
-                    title="Deactivate technician"
+                               text-[#C4C4BA] hover:bg-red-50 hover:text-red-400 transition-colors"
+                    title={`Deactivate ${tabLabel.toLowerCase()}`}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -372,7 +385,8 @@ export default function TechniciansPage() {
 
       {confirmTarget && (
         <ConfirmModal
-          technician={confirmTarget}
+          user={confirmTarget}
+          role={tab}
           onConfirm={handleDeactivate}
           onCancel={() => setConfirmTarget(null)}
           loading={deactivating}

@@ -27,9 +27,10 @@ function todayLabel() {
 }
 
 // ── Mobile header ──────────────────────────────────────────────────────────
-function MobileHeader({ user, onLogout, isAdmin }) {
+function MobileHeader({ user, onLogout, isAdmin, isSupport }) {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
+  const canCreateTicket = isAdmin || isSupport
 
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b border-[#EAEAE4] bg-[#F5F5F0] md:hidden shrink-0">
@@ -64,37 +65,48 @@ function MobileHeader({ user, onLogout, isAdmin }) {
               </div>
               <div className="px-2 py-1 border-b border-[#EAEAE4]">
                 <p className="px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-[#C4C4BA]">Workspace</p>
-                <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
-                  onClick={() => { setOpen(false); navigate('/tickets') }}>
+
+                <div
+                  className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
+                  onClick={() => { setOpen(false); navigate('/tickets') }}
+                >
                   <svg className="w-3.5 h-3.5 text-[#A8A89C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
                       d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                   All Tickets
                 </div>
-                {isAdmin && (
-                  <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
-                    onClick={() => { setOpen(false); navigate('/tickets/create') }}>
+
+                {canCreateTicket && (
+                  <div
+                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
+                    onClick={() => { setOpen(false); navigate('/tickets/create') }}
+                  >
                     <svg className="w-3.5 h-3.5 text-[#A8A89C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4v16m8-8H4" />
                     </svg>
                     New Ticket
                   </div>
                 )}
+
                 {isAdmin && (
-                  <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
-                    onClick={() => { setOpen(false); navigate('/technicians') }}>
+                  <div
+                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-[#F5F5F0] cursor-pointer text-[13px] text-[#52524A]"
+                    onClick={() => { setOpen(false); navigate('/team') }}
+                  >
                     <svg className="w-3.5 h-3.5 text-[#A8A89C]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
                         d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    Technicians
+                    Team
                   </div>
                 )}
               </div>
               <div className="px-2 py-1">
-                <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-red-50 cursor-pointer text-[13px] text-red-500"
-                  onClick={() => { setOpen(false); onLogout() }}>
+                <div
+                  className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-red-50 cursor-pointer text-[13px] text-red-500"
+                  onClick={() => { setOpen(false); onLogout() }}
+                >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
                       d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -110,7 +122,7 @@ function MobileHeader({ user, onLogout, isAdmin }) {
   )
 }
 
-// ── Admin filter bar ───────────────────────────────────────────────────────
+// ── Admin/Support filter bar ───────────────────────────────────────────────
 function AdminFilters({ filters, onChange, onClear, hasActive }) {
   return (
     <div className="px-3 py-2.5 border-b border-[#EAEAE4] space-y-2">
@@ -128,7 +140,6 @@ function AdminFilters({ filters, onChange, onClear, hasActive }) {
         )}
       </div>
 
-      {/* Status */}
       <div className="flex gap-1.5 flex-wrap">
         {['all', 'pending', 'in_progress', 'resolved'].map(s => (
           <button
@@ -143,7 +154,6 @@ function AdminFilters({ filters, onChange, onClear, hasActive }) {
         ))}
       </div>
 
-      {/* Date + Technician */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <input
@@ -238,7 +248,6 @@ function TicketList({
         </div>
       </div>
 
-      {/* Technician status filter chips */}
       {isTech && (
         <div className="filter-bar">
           {techFilters.map(f => (
@@ -253,7 +262,6 @@ function TicketList({
         </div>
       )}
 
-      {/* Admin filters */}
       {!isTech && (
         <AdminFilters
           filters={adminFilters}
@@ -297,8 +305,7 @@ function TicketList({
         )}
       </div>
 
-      {/* Pagination footer — admin only, when more than one page */}
-      {!isTech && totalPages > 1 &&  (
+      {!isTech && totalPages > 1 && (
         <div className="flex items-center justify-between px-3 py-2.5 border-t border-[#EAEAE4] shrink-0">
           <span className="text-[11px] text-[#A8A89C]">
             Page {pagination.page} of {totalPages}
@@ -371,6 +378,8 @@ function TicketDetail({ ticket, detailLoading, onRefresh, onClose }) {
   )
 
   const isTech       = user?.role === 'technician'
+  const isSupport    = user?.role === 'support'
+  const isAdmin      = user?.role === 'admin'
   const isPending    = ticket.status === 'pending'
   const isInProgress = ticket.status === 'in_progress'
   const isResolved   = ticket.status === 'resolved'
@@ -413,7 +422,8 @@ function TicketDetail({ ticket, detailLoading, onRefresh, onClose }) {
 
         <table className="prop-table">
           <tbody>
-            {!isTech && (
+            {/* Meter serial visible to admin and support, hidden from technician until resolved */}
+            {(isAdmin || isSupport) && (
               <PropRow label="Meter Serial">
                 <span className="prop-mono">{ticket.meter_serial_number}</span>
               </PropRow>
@@ -476,6 +486,7 @@ function TicketDetail({ ticket, detailLoading, onRefresh, onClose }) {
         )}
       </div>
 
+      {/* Action bar — technician actions only */}
       {isTech && (
         <div className="action-bar">
           {isPending && (
@@ -526,15 +537,16 @@ export default function TicketsPage() {
   const [adminFilters, setAdminFilters]   = useState({ status: '', date: '', technician: '' })
   const [pagination, setPagination]       = useState({ count: 0, page: 1, next: null, previous: null })
 
-  const isAdmin = user?.role === 'admin'
-  const isTech  = user?.role === 'technician'
+  const isAdmin   = user?.role === 'admin'
+  const isSupport = user?.role === 'support'
+  const isTech    = user?.role === 'technician'
 
   const handleLogout = async () => {
     await logout()
     navigate('/login')
   }
 
-  const buildAdminParams = (filters) => {
+  const buildParams = (filters) => {
     const params = {}
     if (filters.status)     params.status     = filters.status
     if (filters.date)       params.date       = filters.date
@@ -544,7 +556,8 @@ export default function TicketsPage() {
 
   const fetchTickets = async (filters = adminFilters, page = 1) => {
     try {
-      const params = isAdmin ? buildAdminParams(filters) : {}
+      // Technicians get no filter params — backend scopes to today's assigned tickets
+      const params = isTech ? {} : buildParams(filters)
       if (page > 1) params.page = page
       const res  = await api.get('/tickets/', { params })
       const data = res.data
@@ -643,7 +656,12 @@ export default function TicketsPage() {
       <Sidebar />
 
       <div className="flex flex-col flex-1 overflow-hidden">
-        <MobileHeader user={user} onLogout={handleLogout} isAdmin={isAdmin} />
+        <MobileHeader
+          user={user}
+          onLogout={handleLogout}
+          isAdmin={isAdmin}
+          isSupport={isSupport}
+        />
 
         <div className="main-area">
           <TicketList
