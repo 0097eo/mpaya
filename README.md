@@ -29,7 +29,7 @@ mpaya_api/     ← Django backend
 
 mpaya_frontend/        ← React frontend (separate SPA)
 ├── src/
-│   ├── pages/            — LoginPage, DashboardPage, TicketDetailPage
+│   ├── pages/            — LoginPage, TicketsPage, CreateTicketsPage, TechniciansPage
 │   ├── components/       — Navbar
 │   ├── context/          — AuthContext (JWT management)
 │   └── api/              — Axios client with auto-refresh
@@ -141,4 +141,4 @@ If either is missing or the serial does not match, the API returns a `400` with 
 
 ## API Documentation
 
-See `API_DOCS.md` for the full endpoint reference, or open `/api/docs/` for the interactive Swagger UI.
+See [API_DOCS.md](docs/API_DOCS.md) for the full endpoint reference, or open `/api/docs/` for the interactive Swagger UI.

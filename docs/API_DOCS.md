@@ -89,7 +89,7 @@ Get current user profile.
 ### GET `/tickets/`
 List tickets.
 
-- **Technician**: returns tickets with their assignment date to the authenticated user
+- **Technician**: returns today's assigned tickets to the authenticated user
 - **Admin/Superadmin**: returns all tickets with optional filters
 
 **Query Parameters (admin only)**
@@ -98,7 +98,7 @@ List tickets.
 |---|---|---|
 | `status` | string | Filter by `pending`, `in_progress`, or `resolved` |
 | `date` | string (YYYY-MM-DD) | Filter by creation date |
-| `technician` | username | Filter by assigned technician ID |
+| `technician` | username | Filter by assigned technician username |
 
 **Response 200**
 ```json
