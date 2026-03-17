@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -32,6 +33,7 @@ class TicketListCreateViewTests(APITestCase):
             meter_serial_number='MSN001',
             assigned_to=self.tech1,
             created_by=self.admin,
+            assigned_at=timezone.now()
         )
         self.ticket2 = Ticket.objects.create(
             title='Power cut',
@@ -39,6 +41,7 @@ class TicketListCreateViewTests(APITestCase):
             meter_serial_number='MSN002',
             assigned_to=self.tech2,
             created_by=self.admin,
+            assigned_at=timezone.now()
         )
 
     # --- Technician GET ---
