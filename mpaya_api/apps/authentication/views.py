@@ -57,20 +57,40 @@ class TechnicianListCreateView(generics.ListCreateAPIView):
         return UserSerializer
 
     def get_queryset(self):
-        return User.objects.filter(role=User.TECHNICIAN).order_by('-date_joined')
+        return User.objects.filter(role=User.TECHNICIAN, is_active=True).order_by('-date_joined')
 
     def perform_create(self, serializer):
         serializer.save()
 
 
-class TechnicianDetailView(generics.RetrieveDestroyAPIView):
+class TechnicianDetailView(APIView):
     """
     GET    — Get technician detail
     DELETE — Admin removes a technician
     """
     permission_classes = [IsAuthenticated, IsAdmin]
-    serializer_class = UserSerializer
-    queryset = User.objects.filter(role=User.TECHNICIAN)
+
+    def get(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk, role=User.TECHNICIAN, is_active=True)
+        except User.DoesNotExist:
+            return Response(
+                {'error': True, 'message': 'Technician not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        return Response(UserSerializer(user).data)
+
+    def delete(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk, role=User.TECHNICIAN)
+        except User.DoesNotExist:
+            return Response(
+                {'error': True, 'message': 'Technician not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        user.is_active = False
+        user.save()
+        return Response({'message': f'{user.username} has been deactivated.'})
 
 
 class SupportUserListCreateView(generics.ListCreateAPIView):
@@ -86,7 +106,7 @@ class SupportUserListCreateView(generics.ListCreateAPIView):
         return UserSerializer
 
     def get_queryset(self):
-        return User.objects.filter(role=User.SUPPORT)
+        return User.objects.filter(role=User.SUPPORT, is_active=True)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

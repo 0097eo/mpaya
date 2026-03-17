@@ -26,13 +26,15 @@ class Ticket(models.Model):
     # Assignment
     assigned_to = models.ForeignKey(
         User,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='assigned_tickets',
         limit_choices_to={'role': 'technician'}
     )
     created_by = models.ForeignKey(
         User,
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='created_tickets'
     )
 

@@ -138,10 +138,10 @@ class TechnicianDetailViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['username'], 'tech1')
 
-    def test_admin_can_delete_technician(self):
+    def test_admin_can_deactivate_technician(self):
         response = self.client.delete(self.url)
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(User.objects.filter(username='tech1').exists())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertFalse(User.objects.get(username='tech1').is_active)
 
     def test_non_admin_cannot_delete_technician(self):
         self.client.credentials(HTTP_AUTHORIZATION=auth_header(self.technician))
