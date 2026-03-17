@@ -10,9 +10,12 @@ export default function CreateTicketPage() {
     title: '', description: '', meter_serial_number: '', assigned_to: ''
   })
   const [technicians, setTechnicians] = useState([])
-  const [errors, setErrors]     = useState({})
-  const [submitting, setSubmitting] = useState(false)
+  const [errors, setErrors]           = useState({})
+  const [submitting, setSubmitting]   = useState(false)
   const [loadingTechs, setLoadingTechs] = useState(true)
+  const [techOpen, setTechOpen]       = useState(false)
+
+  const selectedTech = technicians.find(t => t.id === form.assigned_to)
 
   useEffect(() => {
     api.get('/tickets/technicians/')
@@ -113,22 +116,59 @@ export default function CreateTicketPage() {
                   <Spinner /> Loading technicians...
                 </div>
               ) : (
-                <select
-                  className="field-input"
-                  value={form.assigned_to}
-                  onChange={e => setForm({ ...form, assigned_to: e.target.value })}
-                  required
-                >
-                  <option value="">Select a technician</option>
-                  {technicians.map(t => (
-                    <option key={t.id} value={t.id}>{t.username}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="field-input flex items-center justify-between text-left w-full"
+                    onClick={() => setTechOpen(v => !v)}
+                  >
+                    <span className={selectedTech ? 'text-[#1A1A18]' : 'text-[#A8A89C]'}>
+                      {selectedTech ? selectedTech.username : 'Select a technician'}
+                    </span>
+                    <svg
+                      className={`w-4 h-4 text-[#A8A89C] shrink-0 transition-transform duration-150
+                                  ${techOpen ? 'rotate-180' : ''}`}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {techOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setTechOpen(false)} />
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-white border
+                                      border-[#EAEAE4] rounded-lg shadow-md z-20 overflow-hidden">
+                        {technicians.length === 0 ? (
+                          <div className="px-3 py-2.5 text-[12px] text-[#A8A89C]">
+                            No technicians available
+                          </div>
+                        ) : (
+                          technicians.map(t => (
+                            <div
+                              key={t.id}
+                              className={`px-3 py-2.5 text-[13px] cursor-pointer transition-colors
+                                ${form.assigned_to === t.id
+                                  ? 'bg-[#FFEDD5] text-[#F97316] font-medium'
+                                  : 'text-[#1A1A18] hover:bg-[#F5F5F0]'
+                                }`}
+                              onClick={() => {
+                                setForm({ ...form, assigned_to: t.id })
+                                setTechOpen(false)
+                              }}
+                            >
+                              {t.username}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
               {errors.assigned_to && <p className="field-error">{errors.assigned_to}</p>}
             </div>
 
-            {/* Divider */}
             <div className="border-t border-[#EAEAE4] pt-4">
               <button
                 type="submit"
