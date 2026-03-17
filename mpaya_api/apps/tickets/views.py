@@ -10,6 +10,7 @@ from apps.authentication.permissions import IsAdminOrSupport, IsTechnician
 from apps.authentication.serializers import UserSerializer
 from .models import Ticket
 from .serializers import (
+    TicketAssignSerializer,
     TicketListSerializer,
     TicketDetailSerializer,
     TicketCreateSerializer,
@@ -112,6 +113,12 @@ class TicketStatusUpdateView(APIView):
                 {'error': True, 'message': 'Ticket not found.'},
                 status=status.HTTP_404_NOT_FOUND
             )
+        
+        if ticket.assigned_to is None:
+            return Response(
+                {'error': True, 'message': 'Ticket has not been assigned to a technician yet.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if ticket.assigned_to != request.user:
             return Response(
@@ -160,6 +167,12 @@ class TicketResolveView(APIView):
             return Response(
                 {'error': True, 'message': 'Ticket not found.'},
                 status=status.HTTP_404_NOT_FOUND
+            )
+        
+        if ticket.assigned_to is None:
+            return Response(
+                {'error': True, 'message': 'Ticket has not been assigned to a technician yet.'},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
         if ticket.assigned_to != request.user:
@@ -213,3 +226,52 @@ class TechnicianListView(generics.ListAPIView):
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(serializer.data)
     
+class TicketAssignView(APIView):
+    """
+    PATCH /tickets/{id}/assign/
+    Admin and Support — assign or reassign a technician.
+    If ticket is in_progress, it resets to pending.
+    """
+    permission_classes = [IsAuthenticated, IsAdminOrSupport]
+
+    def patch(self, request, pk):
+        try:
+            ticket = Ticket.objects.get(pk=pk)
+        except Ticket.DoesNotExist:
+            return Response(
+                {'error': True, 'message': 'Ticket not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if ticket.status == Ticket.RESOLVED:
+            return Response(
+                {'error': True, 'message': 'Resolved tickets cannot be reassigned.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = TicketAssignSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        technician = serializer.validated_data['assigned_to']
+        previous_status = ticket.status
+
+        ticket.assigned_to = technician
+        if ticket.status == Ticket.IN_PROGRESS:
+            ticket.status = Ticket.PENDING
+
+        ticket.save()
+
+        return Response({
+            'id': str(ticket.id),
+            'assigned_to': {
+                'id': str(technician.id),
+                'username': technician.username,
+                'email': technician.email,
+            },
+            'status': ticket.status,
+            'message': (
+                f'Ticket reassigned to {technician.username} and reset to pending.'
+                if previous_status == Ticket.IN_PROGRESS
+                else f'Ticket assigned to {technician.username}.'
+            ),
+        })
