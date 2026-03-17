@@ -59,13 +59,18 @@ class TicketDetailSerializer(serializers.ModelSerializer):
 
 
 class TicketCreateSerializer(serializers.ModelSerializer):
-    """Admin creates a ticket."""
+    assigned_to = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.filter(role=User.TECHNICIAN, is_active=True),
+        required=False,
+        allow_null=True,
+    )
+
     class Meta:
         model = Ticket
         fields = ['title', 'description', 'meter_serial_number', 'assigned_to']
 
     def validate_assigned_to(self, value):
-        if value.role != User.TECHNICIAN:
+        if value and value.role != User.TECHNICIAN:
             raise serializers.ValidationError(
                 'Tickets can only be assigned to technicians.'
             )
@@ -114,3 +119,10 @@ class TicketResolveSerializer(serializers.Serializer):
             })
 
         return attrs
+
+class TicketAssignSerializer(serializers.Serializer):
+    assigned_to = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.filter(role=User.TECHNICIAN, is_active=True),
+        allow_null=True,
+        required=True,
+    )
