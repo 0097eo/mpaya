@@ -4,18 +4,25 @@ import LoginPage          from './pages/LoginPage'
 import TicketsPage        from './pages/TicketsPage'
 import ResolveTicketPage  from './pages/ResolveTicketPage'
 import CreateTicketPage   from './pages/CreateTicketPage'
-import TechniciansPage    from './pages/TechniciansPage'
+import TeamPage from './pages/TeamPage'
 import Spinner            from './components/Spinner'
 
-function Guard({ children, adminOnly = false }) {
+function Guard({ children, allowedRoles }) {
   const { user, loading } = useAuth()
+  
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#FAFAF8]">
       <Spinner />
     </div>
   )
+  
   if (!user) return <Navigate to="/login" replace />
-  if (adminOnly && user.role !== 'admin') return <Navigate to="/tickets" replace />
+
+  // If allowedRoles is provided, check if user's role is included
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/tickets" replace />
+  }
+
   return children
 }
 
@@ -24,20 +31,19 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
 
-      <Route path="/tickets" element={
-        <Guard><TicketsPage /></Guard>
-      } />
-      <Route path="/tickets/:id" element={
-        <Guard><TicketsPage /></Guard>
-      } />
-      <Route path="/tickets/:id/resolve" element={
-        <Guard><ResolveTicketPage /></Guard>
-      } />
+      <Route path="/tickets" element={<Guard><TicketsPage /></Guard>} />
+      <Route path="/tickets/:id" element={<Guard><TicketsPage /></Guard>} />  {/* add this */}
+
       <Route path="/tickets/create" element={
-        <Guard adminOnly><CreateTicketPage /></Guard>
+        <Guard allowedRoles={['admin', 'support']}><CreateTicketPage /></Guard>
       } />
-      <Route path="/technicians" element={
-        <Guard adminOnly><TechniciansPage /></Guard>
+
+      <Route path="/tickets/:id/resolve" element={
+        <Guard allowedRoles={['technician']}><ResolveTicketPage /></Guard>
+      } />
+
+      <Route path="/team" element={
+        <Guard allowedRoles={['admin']}><TeamPage /></Guard>
       } />
 
       <Route path="*" element={<Navigate to="/tickets" replace />} />
