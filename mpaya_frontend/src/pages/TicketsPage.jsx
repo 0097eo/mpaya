@@ -20,7 +20,6 @@ function fmtFull(iso) {
     hour: '2-digit', minute: '2-digit'
   })
 }
-
 function todayLabel() {
   return new Date().toLocaleDateString('en-KE', {
     weekday: 'long', day: 'numeric', month: 'long'
@@ -111,20 +110,106 @@ function MobileHeader({ user, onLogout, isAdmin }) {
   )
 }
 
+// ── Admin filter bar ───────────────────────────────────────────────────────
+function AdminFilters({ filters, onChange, onClear, hasActive }) {
+  return (
+    <div className="px-3 py-2.5 border-b border-[#EAEAE4] space-y-2">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-[#A8A89C]">
+          Filters
+        </span>
+        {hasActive && (
+          <button
+            onClick={onClear}
+            className="text-[10px] text-[#F97316] font-medium hover:underline"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
+      {/* Status */}
+      <div className="flex gap-1.5 flex-wrap">
+        {['all', 'pending', 'in_progress', 'resolved'].map(s => (
+          <button
+            key={s}
+            onClick={() => onChange('status', s === 'all' ? '' : s)}
+            className={`filter-chip ${
+              (s === 'all' && !filters.status) || filters.status === s ? 'active' : ''
+            }`}
+          >
+            {{ all: 'All', pending: 'Pending', in_progress: 'In Progress', resolved: 'Resolved' }[s]}
+          </button>
+        ))}
+      </div>
+
+      {/* Date + Technician */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <input
+            type="date"
+            value={filters.date}
+            onChange={e => onChange('date', e.target.value)}
+            className="field-input text-[12px] py-1.5 pr-7 w-full"
+          />
+          {filters.date && (
+            <button
+              onClick={() => onChange('date', '')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#A8A89C] hover:text-[#52524A]"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Technician..."
+            value={filters.technician}
+            onChange={e => onChange('technician', e.target.value)}
+            className="field-input text-[12px] py-1.5 pr-7 w-full"
+          />
+          {filters.technician && (
+            <button
+              onClick={() => onChange('technician', '')}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[#A8A89C] hover:text-[#52524A]"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Ticket list column ─────────────────────────────────────────────────────
-function TicketList({ tickets, loading, selectedId, onSelect, activeFilter, onFilter, isTech }) {
-  const filters = isTech
-    ? ['all', 'pending', 'in_progress', 'resolved']
-    : ['all', 'pending', 'in_progress', 'resolved']
+function TicketList({
+  tickets,
+  loading,
+  selectedId,
+  onSelect,
+  isTech,
+  adminFilters,
+  onAdminFilterChange,
+  onAdminFilterClear,
+  pagination,
+  onPageChange,
+}) {
+  const techFilters = ['all', 'pending', 'in_progress', 'resolved']
+  const fLabel = { all: 'All', pending: 'Pending', in_progress: 'In Progress', resolved: 'Resolved' }
+  const [techFilter, setTechFilter] = useState('all')
 
-  const fLabel = {
-    all: 'All', pending: 'Pending',
-    in_progress: 'In Progress', resolved: 'Resolved',
-  }
+  const displayed = isTech
+    ? (techFilter === 'all' ? tickets : tickets.filter(t => t.status === techFilter))
+    : tickets
 
-  const filtered = activeFilter === 'all'
-    ? tickets
-    : tickets.filter(t => t.status === activeFilter)
+  const hasActiveAdminFilters = !!(adminFilters.status || adminFilters.date || adminFilters.technician)
+  const totalPages = pagination?.count ? Math.ceil(pagination.count / 20) : 0
 
   if (loading) return (
     <div className="list-column">
@@ -141,9 +226,11 @@ function TicketList({ tickets, loading, selectedId, onSelect, activeFilter, onFi
         <div className="flex flex-col gap-0.5">
           <span className="list-header-title">
             Tickets
-            {filtered.length > 0 && (
-              <span className="count-pill">{filtered.length}</span>
-            )}
+            {!isTech && pagination?.count > 0 ? (
+              <span className="count-pill">{pagination.count}</span>
+            ) : displayed.length > 0 ? (
+              <span className="count-pill">{displayed.length}</span>
+            ) : null}
           </span>
           {isTech && (
             <span className="text-[10px] text-[#A8A89C]">{todayLabel()}</span>
@@ -151,20 +238,33 @@ function TicketList({ tickets, loading, selectedId, onSelect, activeFilter, onFi
         </div>
       </div>
 
-      <div className="filter-bar">
-        {filters.map(f => (
-          <button
-            key={f}
-            className={`filter-chip ${activeFilter === f ? 'active' : ''}`}
-            onClick={() => onFilter(f)}
-          >
-            {fLabel[f]}
-          </button>
-        ))}
-      </div>
+      {/* Technician status filter chips */}
+      {isTech && (
+        <div className="filter-bar">
+          {techFilters.map(f => (
+            <button
+              key={f}
+              className={`filter-chip ${techFilter === f ? 'active' : ''}`}
+              onClick={() => setTechFilter(f)}
+            >
+              {fLabel[f]}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Admin filters */}
+      {!isTech && (
+        <AdminFilters
+          filters={adminFilters}
+          onChange={onAdminFilterChange}
+          onClear={onAdminFilterClear}
+          hasActive={hasActiveAdminFilters}
+        />
+      )}
 
       <div className="ticket-list">
-        {filtered.length === 0 ? (
+        {displayed.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">
               <svg className="w-5 h-5 text-[#C4C4BA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -174,11 +274,11 @@ function TicketList({ tickets, loading, selectedId, onSelect, activeFilter, onFi
             </div>
             <p className="text-[13px] font-medium text-[#52524A]">No tickets</p>
             <p className="text-[12px] mt-0.5">
-              {isTech ? 'No tickets assigned to you today.' : 'Nothing here yet.'}
+              {isTech ? 'No tickets assigned to you today.' : 'Nothing matches your filters.'}
             </p>
           </div>
         ) : (
-          filtered.map(ticket => (
+          displayed.map(ticket => (
             <div
               key={ticket.id}
               className={`ticket-row ${selectedId === ticket.id ? 'selected' : ''}`}
@@ -196,6 +296,36 @@ function TicketList({ tickets, loading, selectedId, onSelect, activeFilter, onFi
           ))
         )}
       </div>
+
+      {/* Pagination footer — admin only, when more than one page */}
+      {!isTech && totalPages > 1 &&  (
+        <div className="flex items-center justify-between px-3 py-2.5 border-t border-[#EAEAE4] shrink-0">
+          <span className="text-[11px] text-[#A8A89C]">
+            Page {pagination.page} of {totalPages}
+            <span className="ml-1 text-[#C4C4BA]">({pagination.count})</span>
+          </span>
+          <div className="flex gap-1.5">
+            <button
+              disabled={!pagination.previous}
+              onClick={() => onPageChange(pagination.page - 1)}
+              className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-[#EAEAE4]
+                         disabled:opacity-30 disabled:cursor-not-allowed
+                         hover:bg-[#F5F5F0] transition-colors text-[#52524A]"
+            >
+              ← Prev
+            </button>
+            <button
+              disabled={!pagination.next}
+              onClick={() => onPageChange(pagination.page + 1)}
+              className="px-2.5 py-1 text-[11px] font-medium rounded-lg border border-[#EAEAE4]
+                         disabled:opacity-30 disabled:cursor-not-allowed
+                         hover:bg-[#F5F5F0] transition-colors text-[#52524A]"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -387,13 +517,14 @@ export default function TicketsPage() {
   const location  = useLocation()
   const { id }    = useParams()
 
-  const [tickets, setTickets]           = useState([])
-  const [selected, setSelected]         = useState(null)
-  const [loading, setLoading]           = useState(true)
+  const [tickets, setTickets]             = useState([])
+  const [selected, setSelected]           = useState(null)
+  const [loading, setLoading]             = useState(true)
   const [detailLoading, setDetailLoading] = useState(false)
-  const [filter, setFilter]             = useState('all')
-  const [toast, setToast]               = useState('')
-  const [mobileDetail, setMobileDetail] = useState(false)
+  const [toast, setToast]                 = useState('')
+  const [mobileDetail, setMobileDetail]   = useState(false)
+  const [adminFilters, setAdminFilters]   = useState({ status: '', date: '', technician: '' })
+  const [pagination, setPagination]       = useState({ count: 0, page: 1, next: null, previous: null })
 
   const isAdmin = user?.role === 'admin'
   const isTech  = user?.role === 'technician'
@@ -403,30 +534,50 @@ export default function TicketsPage() {
     navigate('/login')
   }
 
+  const buildAdminParams = (filters) => {
+    const params = {}
+    if (filters.status)     params.status     = filters.status
+    if (filters.date)       params.date       = filters.date
+    if (filters.technician) params.technician = filters.technician
+    return params
+  }
+
+  const fetchTickets = async (filters = adminFilters, page = 1) => {
+    try {
+      const params = isAdmin ? buildAdminParams(filters) : {}
+      if (page > 1) params.page = page
+      const res  = await api.get('/tickets/', { params })
+      const data = res.data
+      if (data.results !== undefined) {
+        setPagination({ count: data.count, page, next: data.next, previous: data.previous })
+        return data.results
+      }
+      return data
+    } catch (e) {
+      console.error('Failed to load tickets:', e)
+      return []
+    }
+  }
+
   useEffect(() => {
     const load = async () => {
-      try {
-        const res  = await api.get('/tickets/')
-        const list = res.data.results ?? res.data
-        setTickets(list)
+      const list = await fetchTickets()
+      setTickets(list)
 
-        if (id) {
-          setDetailLoading(true)
-          try {
-            const detail = await api.get(`/tickets/${id}/`)
-            setSelected(detail.data)
-            setMobileDetail(true)
-          } catch (e) {
-            console.error('Failed to load ticket detail:', e)
-          } finally {
-            setDetailLoading(false)
-          }
+      if (id) {
+        setDetailLoading(true)
+        try {
+          const detail = await api.get(`/tickets/${id}/`)
+          setSelected(detail.data)
+          setMobileDetail(true)
+        } catch (e) {
+          console.error('Failed to load ticket detail:', e)
+        } finally {
+          setDetailLoading(false)
         }
-      } catch (e) {
-        console.error('Failed to load tickets:', e)
-      } finally {
-        setLoading(false)
       }
+
+      setLoading(false)
     }
     load()
   }, [id])
@@ -437,6 +588,27 @@ export default function TicketsPage() {
       window.history.replaceState({}, '')
     }
   }, [location])
+
+  const handleAdminFilterChange = async (key, value) => {
+    const updated = { ...adminFilters, [key]: value }
+    setAdminFilters(updated)
+    const list = await fetchTickets(updated, 1)
+    setTickets(list)
+  }
+
+  const handleAdminFilterClear = async () => {
+    const cleared = { status: '', date: '', technician: '' }
+    setAdminFilters(cleared)
+    const list = await fetchTickets(cleared, 1)
+    setTickets(list)
+  }
+
+  const handlePageChange = async (newPage) => {
+    setLoading(true)
+    const list = await fetchTickets(adminFilters, newPage)
+    setTickets(list)
+    setLoading(false)
+  }
 
   const handleSelect = async (ticket) => {
     setSelected(null)
@@ -454,16 +626,15 @@ export default function TicketsPage() {
   }
 
   const handleRefresh = async () => {
-    try {
-      const listRes = await api.get('/tickets/')
-      setTickets(listRes.data.results ?? listRes.data)
-
-      if (selected) {
+    const list = await fetchTickets(adminFilters, pagination.page)
+    setTickets(list)
+    if (selected) {
+      try {
         const detail = await api.get(`/tickets/${selected.id}/`)
         setSelected(detail.data)
+      } catch (e) {
+        console.error('Refresh failed:', e)
       }
-    } catch (e) {
-      console.error('Refresh failed:', e)
     }
   }
 
@@ -480,9 +651,12 @@ export default function TicketsPage() {
             loading={loading}
             selectedId={selected?.id}
             onSelect={handleSelect}
-            activeFilter={filter}
-            onFilter={setFilter}
             isTech={isTech}
+            adminFilters={adminFilters}
+            onAdminFilterChange={handleAdminFilterChange}
+            onAdminFilterClear={handleAdminFilterClear}
+            pagination={pagination}
+            onPageChange={handlePageChange}
           />
 
           <div className={`detail-panel ${mobileDetail ? 'visible-mobile' : 'hidden-mobile'} md:flex md:translate-x-0`}>
