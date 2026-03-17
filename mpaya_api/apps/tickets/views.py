@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
-from apps.authentication.permissions import IsAdmin, IsTechnician
+from apps.authentication.permissions import IsAdminOrSupport, IsTechnician
 from apps.authentication.serializers import UserSerializer
 from .models import Ticket
 from .serializers import (
@@ -31,17 +31,14 @@ User = get_user_model()
     post=extend_schema(parameters=[])
 )
 class TicketListCreateView(generics.ListCreateAPIView):
-    """
-    GET  — Technician sees today's assigned tickets.
-           Admin sees all tickets, filterable by date/status/technician.
-    POST — Admin creates a ticket.
-    """
+    """GET  — Admin and Support list tickets with optional filters
+POST — Admin creates a new ticket"""
 
     def get_permissions(self):
         if self.request.method == 'POST':
-            return [IsAuthenticated(), IsAdmin()]
+            return [IsAuthenticated(), IsAdminOrSupport()]  # was IsAdmin
         return [IsAuthenticated()]
-
+    
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return TicketCreateSerializer
@@ -52,13 +49,13 @@ class TicketListCreateView(generics.ListCreateAPIView):
             return Ticket.objects.none()
 
         user = self.request.user
-        qs = Ticket.objects.select_related('assigned_to', 'created_by')
+        qs   = Ticket.objects.select_related('assigned_to', 'created_by')
 
         if user.role == User.TECHNICIAN:
             start_of_today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
             return qs.filter(assigned_to=user, created_at__gte=start_of_today)
 
-        # Admin — full visibility with optional filters
+        # Admin and Support — full visibility with optional filters
         status_filter     = self.request.query_params.get('status')
         date_filter       = self.request.query_params.get('date')
         technician_filter = self.request.query_params.get('technician')
@@ -73,7 +70,7 @@ class TicketListCreateView(generics.ListCreateAPIView):
             qs = qs.filter(assigned_to__username__icontains=technician_filter)
 
         return qs
-
+    
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
@@ -208,10 +205,11 @@ class TechnicianListView(generics.ListAPIView):
     GET /tickets/technicians/
     Admin only — list technicians for ticket assignment dropdown.
     """
-    permission_classes = [IsAuthenticated, IsAdmin]
+    permission_classes = [IsAuthenticated, IsAdminOrSupport]
     serializer_class = UserSerializer
     queryset = User.objects.filter(role=User.TECHNICIAN)
 
     def get(self, request):
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(serializer.data)
+    
