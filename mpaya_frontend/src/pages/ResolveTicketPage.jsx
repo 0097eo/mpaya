@@ -20,8 +20,6 @@ export default function ResolveTicketPage() {
       .finally(() => setLoading(false))
   }, [id])
 
-  const serialMatch = form.resolved_meter_serial.trim().toUpperCase() ===
-                      ticket?.meter_serial_number?.trim().toUpperCase()
   const charCount = form.resolution_summary.length
   const canSubmit = charCount >= 10 && form.resolved_meter_serial.trim()
 
@@ -40,11 +38,11 @@ export default function ResolveTicketPage() {
         resolved_meter_serial: Array.isArray(data.resolved_meter_serial)
           ? data.resolved_meter_serial[0]
           : data.resolved_meter_serial,
-        general: data.message && data.message !== 'Validation error.' 
-          ? data.message 
+        general: data.message && data.message !== 'Validation error.'
+          ? data.message
           : null,
       })
-  }finally { setSubmitting(false) }
+    } finally { setSubmitting(false) }
   }
 
   return (
@@ -121,34 +119,17 @@ export default function ResolveTicketPage() {
               {/* Meter serial */}
               <div className="field-wrap">
                 <label className="field-label">Meter Serial Number</label>
-                <div className="relative">
-                  <input
-                    className="field-input font-mono pr-10"
-                    type="text"
-                    placeholder="e.g. MTR-2024-001"
-                    value={form.resolved_meter_serial}
-                    onChange={e => setForm({ ...form, resolved_meter_serial: e.target.value })}
-                    required
-                  />
-                  {form.resolved_meter_serial.trim() && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                      {serialMatch ? (
-                        <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      )}
-                    </span>
-                  )}
-                </div>
-                {errors.resolved_meter_serial ? (
+                <input
+                  className="field-input font-mono"
+                  type="text"
+                  placeholder="e.g. MTR-2024-001"
+                  value={form.resolved_meter_serial}
+                  onChange={e => setForm({ ...form, resolved_meter_serial: e.target.value })}
+                  required
+                />
+                {errors.resolved_meter_serial && (
                   <p className="field-error">{errors.resolved_meter_serial}</p>
-                ) : form.resolved_meter_serial.trim() && !serialMatch ? (
-                  <p className="field-error">Serial does not match ticket record.</p>
-                ) : null}
+                )}
               </div>
 
               <button
