@@ -19,6 +19,7 @@ from .serializers import (
 
 User = get_user_model()
 
+
 @extend_schema_view(
     get=extend_schema(
         parameters=[
@@ -27,10 +28,8 @@ User = get_user_model()
             OpenApiParameter(name='technician', description='Filter by technician username (partial match)', required=False, type=str),
         ]
     ),
-    post=extend_schema(parameters=[])  # 👈 clears the noise from POST
+    post=extend_schema(parameters=[])
 )
-
-
 class TicketListCreateView(generics.ListCreateAPIView):
     """
     GET  — Technician sees today's assigned tickets.
@@ -56,12 +55,12 @@ class TicketListCreateView(generics.ListCreateAPIView):
         qs = Ticket.objects.select_related('assigned_to', 'created_by')
 
         if user.role == User.TECHNICIAN:
-        
-            return qs.filter(assigned_to=user)
+            start_of_today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            return qs.filter(assigned_to=user, created_at__gte=start_of_today)
 
         # Admin — full visibility with optional filters
-        status_filter = self.request.query_params.get('status')
-        date_filter = self.request.query_params.get('date')
+        status_filter     = self.request.query_params.get('status')
+        date_filter       = self.request.query_params.get('date')
         technician_filter = self.request.query_params.get('technician')
 
         if status_filter:
