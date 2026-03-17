@@ -31,6 +31,8 @@ User = get_user_model()
     ),
     post=extend_schema(parameters=[])
 )
+
+@extend_schema(tags=['tickets'])
 class TicketListCreateView(generics.ListCreateAPIView):
     """GET  — Admin and Support list tickets with optional filters
 POST — Admin creates a new ticket"""
@@ -54,7 +56,7 @@ POST — Admin creates a new ticket"""
 
         if user.role == User.TECHNICIAN:
             start_of_today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
-            return qs.filter(assigned_to=user, created_at__gte=start_of_today)
+            return qs.filter(assigned_to=user, assigned_at__gte=start_of_today)
 
         # Admin and Support — full visibility with optional filters
         status_filter     = self.request.query_params.get('status')
@@ -73,9 +75,14 @@ POST — Admin creates a new ticket"""
         return qs
     
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        assigned_to = serializer.validated_data.get('assigned_to')
+        serializer.save(
+        created_by=self.request.user,
+            assigned_at=timezone.now() if assigned_to else None,
+        )
 
 
+@extend_schema(tags=['tickets'])
 class TicketDetailView(generics.RetrieveAPIView):
     """
     GET — Full ticket detail.
@@ -97,6 +104,7 @@ class TicketDetailView(generics.RetrieveAPIView):
         return qs
 
 
+@extend_schema(tags=['tickets'])
 class TicketStatusUpdateView(APIView):
     """
     PATCH /tickets/{id}/status/
@@ -151,6 +159,7 @@ class TicketStatusUpdateView(APIView):
         })
 
 
+@extend_schema(tags=['tickets'])
 class TicketResolveView(APIView):
     """
     POST /tickets/{id}/resolve/
@@ -213,6 +222,7 @@ class TicketResolveView(APIView):
         })
 
 
+@extend_schema(tags=['tickets'])
 class TechnicianListView(generics.ListAPIView):
     """
     GET /tickets/technicians/
@@ -226,6 +236,7 @@ class TechnicianListView(generics.ListAPIView):
         serializer = self.get_serializer(self.get_queryset(), many=True)
         return Response(serializer.data)
     
+@extend_schema(tags=['tickets'])
 class TicketAssignView(APIView):
     """
     PATCH /tickets/{id}/assign/
@@ -256,6 +267,7 @@ class TicketAssignView(APIView):
         previous_status = ticket.status
 
         ticket.assigned_to = technician
+        ticket.assigned_at = timezone.now() 
         if ticket.status == Ticket.IN_PROGRESS:
             ticket.status = Ticket.PENDING
 

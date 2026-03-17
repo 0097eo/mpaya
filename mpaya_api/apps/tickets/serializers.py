@@ -39,12 +39,12 @@ class TicketDetailSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 'meter_serial_number',
             'status', 'assigned_to', 'created_by',
             'resolution_summary', 'resolved_meter_serial',
-            'resolved_at', 'created_at', 'updated_at'
+            'resolved_at', 'created_at', 'assigned_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'status', 'resolution_summary',
             'resolved_meter_serial', 'resolved_at',
-            'created_at', 'updated_at'
+            'created_at', 'assigned_at', 'updated_at'
         ]
 
     def to_representation(self, instance):
