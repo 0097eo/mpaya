@@ -117,6 +117,27 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'API for managing energy-related tickets and issues.',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    
+    # Grouping & Sorting
+    'SCHEMA_PATH_PREFIX': r'/api/v1/',
+    'TAGS': [
+        {'name': 'auth', 'description': 'Endpoints for login, logout, and token management'},
+        {'name': 'tickets', 'description': 'Endpoints for creating, listing, and resolving tickets'},
+        {'name': 'users', 'description': 'Endpoints for managing technicians and support staff'},
+    ],
+
+    # Authentication Configuration
+    'COMPONENT_SPLIT_PATCH': True,
+    'SECURITY': [{'jwtAuth': []}],
+    'APPEND_COMPONENTS': {
+        'securitySchemes': {
+            'jwtAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+        }
+    },
 }
 
 CSRF_TRUSTED_ORIGINS = [

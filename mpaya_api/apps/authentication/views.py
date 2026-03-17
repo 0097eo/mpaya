@@ -8,15 +8,18 @@ from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import get_user_model
 from apps.authentication.permissions import IsAdmin, IsAdminOrSupport
 from .serializers import MPayaTokenSerializer, UserSerializer, LogoutSerializer, CreateTechnicianSerializer, CreateSupportSerializer
+from drf_spectacular.utils import extend_schema
 
 User = get_user_model()
 
 
+@extend_schema(tags=['auth'])
 class LoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
     serializer_class = MPayaTokenSerializer
 
 
+@extend_schema(tags=['auth'])
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
     serializer_class = LogoutSerializer
@@ -36,7 +39,7 @@ class LogoutView(APIView):
 
         return Response({'message': 'Logged out successfully.'})
 
-
+@extend_schema(tags=['users'])
 class MeView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer
@@ -44,6 +47,7 @@ class MeView(generics.RetrieveAPIView):
     def get_object(self):
         return self.request.user
 
+@extend_schema(tags=['users'])
 class TechnicianListCreateView(generics.ListCreateAPIView):
     """
     GET  — Admin lists all technicians
@@ -63,6 +67,7 @@ class TechnicianListCreateView(generics.ListCreateAPIView):
         serializer.save()
 
 
+@extend_schema(tags=['users'])
 class TechnicianDetailView(APIView):
     """
     GET    — Get technician detail
@@ -93,6 +98,7 @@ class TechnicianDetailView(APIView):
         return Response({'message': f'{user.username} has been deactivated.'})
 
 
+@extend_schema(tags=['users'])
 class SupportUserListCreateView(generics.ListCreateAPIView):
     """
     GET  — Admin lists support users
@@ -117,6 +123,7 @@ class SupportUserListCreateView(generics.ListCreateAPIView):
             status=status.HTTP_201_CREATED
         )
     
+@extend_schema(tags=['users'])
 class SupportUserDeactivateView(APIView):
     """DELETE /tickets/support-users/{id}/deactivate/
 Admin only — deactivates a support user account (soft delete)"""
