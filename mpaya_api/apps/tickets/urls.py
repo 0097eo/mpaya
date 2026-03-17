@@ -5,6 +5,7 @@ from .views import (
     TicketStatusUpdateView,
     TicketResolveView,
     TechnicianListView,
+    TicketAssignView,
 )
 
 urlpatterns = [
@@ -12,5 +13,6 @@ urlpatterns = [
     path('<uuid:pk>/', TicketDetailView.as_view(), name='ticket-detail'),
     path('<uuid:pk>/status/', TicketStatusUpdateView.as_view(), name='ticket-status'),
     path('<uuid:pk>/resolve/', TicketResolveView.as_view(), name='ticket-resolve'),
+    path('<uuid:pk>/assign/',       TicketAssignView.as_view()),
     path('technicians/', TechnicianListView.as_view(), name='technician-list'),
 ]
