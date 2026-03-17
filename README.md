@@ -123,8 +123,9 @@ The Vite proxy forwards all `/api` calls to the Django backend automatically.
 
 | Role | Access |
 |---|---|
-| `admin` | Create tickets, view all tickets, filter by date and status |
-| `technician` | View assigned tickets, update status, resolve tickets |
+| `admin` | Manage team (technicians + support users), view all tickets, filter by date/status/technician |
+| `support` | Create tickets, assign to technicians, view all tickets |
+| `technician` | View today's assigned tickets, update status, resolve tickets |
 
 ---
 

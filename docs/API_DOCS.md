@@ -2,7 +2,7 @@
 
 Base URL: `http://localhost:8000/api/v1`
 
-All endpoints except login require the header:
+All endpoints except `/auth/login/` require the header:
 ```
 Authorization: Bearer <access_token>
 ```
@@ -29,9 +29,9 @@ Obtain JWT tokens.
   "refresh": "<refresh_token>",
   "user": {
     "id": "uuid",
+    "username": "tech1",
     "email": "tech1@mpaya.com",
-    "role": "technician",
-    "is_verified": true
+    "role": "technician"
   }
 }
 ```
@@ -77,9 +77,116 @@ Get current user profile.
   "id": "uuid",
   "username": "tech1",
   "email": "tech1@mpaya.com",
-  "role": "technician",
-  "is_verified": true
+  "role": "technician"
 }
+```
+
+---
+
+## Team Management
+
+### GET `/auth/technicians/`
+List all technician accounts. **Admin only.**
+
+**Response 200**
+```json
+[
+  {
+    "id": "uuid",
+    "username": "tech1",
+    "email": "tech1@mpaya.com",
+    "role": "technician",
+    "date_joined": "2026-03-01T08:00:00Z"
+  }
+]
+```
+
+---
+
+### POST `/auth/technicians/`
+Create a technician account. **Admin only.**
+
+**Request**
+```json
+{
+  "username": "tech2",
+  "email": "tech2@mpaya.com",
+  "password": "securepass"
+}
+```
+
+**Response 201**
+```json
+{
+  "id": "uuid",
+  "username": "tech2",
+  "email": "tech2@mpaya.com",
+  "role": "technician",
+  "date_joined": "2026-03-17T10:00:00Z"
+}
+```
+
+---
+
+### DELETE `/auth/technicians/{id}/`
+Deactivate a technician account. **Admin only.** Sets `is_active = false` — reversible from Django admin.
+
+**Response 200**
+```json
+{ "message": "tech2 has been deactivated." }
+```
+
+---
+
+### GET `/auth/support/`
+List all customer support accounts. **Admin only.**
+
+**Response 200**
+```json
+[
+  {
+    "id": "uuid",
+    "username": "support.wanjiku",
+    "email": "wanjiku@mpaya.com",
+    "role": "support",
+    "date_joined": "2026-03-01T08:00:00Z"
+  }
+]
+```
+
+---
+
+### POST `/auth/support/`
+Create a customer support account. **Admin only.**
+
+**Request**
+```json
+{
+  "username": "support.wanjiku",
+  "email": "wanjiku@mpaya.com",
+  "password": "securepass"
+}
+```
+
+**Response 201**
+```json
+{
+  "id": "uuid",
+  "username": "support.wanjiku",
+  "email": "wanjiku@mpaya.com",
+  "role": "support",
+  "date_joined": "2026-03-17T10:00:00Z"
+}
+```
+
+---
+
+### DELETE `/auth/support/{id}/`
+Deactivate a support account. **Admin only.**
+
+**Response 200**
+```json
+{ "message": "support.wanjiku has been deactivated." }
 ```
 
 ---
@@ -89,39 +196,45 @@ Get current user profile.
 ### GET `/tickets/`
 List tickets.
 
-- **Technician**: returns today's assigned tickets to the authenticated user
-- **Admin/Superadmin**: returns all tickets with optional filters
+- **Technician**: returns today's assigned tickets only
+- **Admin / Support**: returns all tickets with optional filters, paginated (20 per page)
 
-**Query Parameters (admin only)**
+**Query Parameters (admin/support only)**
 
 | Param | Type | Description |
 |---|---|---|
 | `status` | string | Filter by `pending`, `in_progress`, or `resolved` |
 | `date` | string (YYYY-MM-DD) | Filter by creation date |
-| `technician` | username | Filter by assigned technician username |
+| `technician` | string | Filter by assigned technician username (partial match) |
+| `page` | integer | Page number (default: 1) |
 
 **Response 200**
 ```json
-[
-  {
-    "id": "uuid",
-    "title": "Meter fault at Unit 4B",
-    "meter_serial_number": "MTR-2024-001",
-    "status": "pending",
-    "assigned_to": {
+{
+  "count": 143,
+  "next": "http://localhost:8000/api/v1/tickets/?page=2",
+  "previous": null,
+  "results": [
+    {
       "id": "uuid",
-      "username": "tech1",
-      "email": "tech1@mpaya.com"
-    },
-    "created_at": "2026-03-16T08:00:00Z"
-  }
-]
+      "title": "Meter fault at Unit 4B",
+      "meter_serial_number": "MTR-2024-001",
+      "status": "pending",
+      "assigned_to": {
+        "id": "uuid",
+        "username": "tech1",
+        "email": "tech1@mpaya.com"
+      },
+      "created_at": "2026-03-16T08:00:00Z"
+    }
+  ]
+}
 ```
 
 ---
 
 ### POST `/tickets/`
-Create a ticket. **Admin only.**
+Create a ticket. **Admin and Support only.**
 
 **Request**
 ```json
@@ -145,12 +258,9 @@ Create a ticket. **Admin only.**
 }
 ```
 
-**Error 400** — if assigned_to is not a technician
+**Error 400** — assigned_to is not a technician
 ```json
-{
-  "error": true,
-  "message": "Tickets can only be assigned to technicians."
-}
+{ "assigned_to": "Tickets can only be assigned to technicians." }
 ```
 
 ---
@@ -169,9 +279,9 @@ Get full ticket detail.
   "meter_serial_number": "MTR-2024-001",
   "status": "in_progress",
   "assigned_to": { "id": "uuid", "username": "tech1", "email": "tech1@mpaya.com" },
-  "created_by": { "id": "uuid", "username": "admin", "email": "admin@mpaya.com" },
-  "resolution_summary": "",
-  "resolved_meter_serial": "",
+  "created_by": { "id": "uuid", "username": "support.wanjiku", "email": "wanjiku@mpaya.com" },
+  "resolution_summary": null,
+  "resolved_meter_serial": null,
   "resolved_at": null,
   "created_at": "2026-03-16T08:00:00Z",
   "updated_at": "2026-03-16T09:00:00Z"
@@ -181,9 +291,9 @@ Get full ticket detail.
 ---
 
 ### PATCH `/tickets/{id}/status/`
-Move ticket to `in_progress`. Technician only.
+Move ticket to `in_progress`. **Technician only.**
 
-Cannot skip to resolved — use `/resolve/` for that.
+Cannot skip to `resolved` — use `/resolve/` for that.
 
 **Request**
 ```json
@@ -199,28 +309,27 @@ Cannot skip to resolved — use `/resolve/` for that.
 }
 ```
 
-**Error 400** — if ticket is already resolved
+**Error 400** — ticket already resolved
 ```json
-{
-  "error": true,
-  "message": "Resolved tickets cannot be updated."
-}
+{ "error": true, "message": "Resolved tickets cannot be updated." }
 ```
 
-**Error 403** — if technician is not assigned to this ticket
+**Error 400** — ticket already in progress
 ```json
-{
-  "error": true,
-  "message": "You are not assigned to this ticket."
-}
+{ "error": true, "message": "Ticket is already in progress." }
+```
+
+**Error 403** — not assigned to this ticket
+```json
+{ "error": true, "message": "You are not assigned to this ticket." }
 ```
 
 ---
 
 ### POST `/tickets/{id}/resolve/`
-Resolve a ticket. **Core close-loop endpoint.**
+Resolve a ticket. **Technician only. Core close-loop endpoint.**
 
-Both fields are mandatory. The `resolved_meter_serial` must exactly match the `meter_serial_number` on the ticket record. The backend rejects any request that fails either condition.
+Both fields are mandatory. `resolved_meter_serial` must exactly match the `meter_serial_number` on the ticket record. The ticket must be `in_progress` before it can be resolved.
 
 **Request**
 ```json
@@ -240,41 +349,30 @@ Both fields are mandatory. The `resolved_meter_serial` must exactly match the `m
 }
 ```
 
-**Error 400** — missing resolution summary
+**Error 400** — serial mismatch
 ```json
-{
-  "error": true,
-  "message": "Resolution summary is required to close a ticket."
-}
+{ "resolved_meter_serial": "Meter serial number does not match ticket record." }
 ```
 
-**Error 400** — serial number mismatch
+**Error 400** — ticket still pending
 ```json
-{
-  "resolved_meter_serial": "Meter serial number does not match ticket record. Expected: MTR-2024-001."
-}
+{ "error": true, "message": "Ticket must be in progress before it can be resolved." }
 ```
 
-**Error 400** — ticket already resolved
+**Error 400** — already resolved
 ```json
-{
-  "error": true,
-  "message": "Ticket is already resolved."
-}
+{ "error": true, "message": "Ticket is already resolved." }
 ```
 
-**Error 403** — wrong technician
+**Error 403** — not assigned
 ```json
-{
-  "error": true,
-  "message": "You are not assigned to this ticket."
-}
+{ "error": true, "message": "You are not assigned to this ticket." }
 ```
 
 ---
 
 ### GET `/tickets/technicians/`
-List all technician users. **Admin only.** Used for ticket assignment dropdown.
+List technicians for ticket assignment dropdown. **Admin and Support.**
 
 **Response 200**
 ```json
@@ -293,7 +391,6 @@ List all technician users. **Admin only.** Used for ticket assignment dropdown.
 ## Error Response Format
 
 All errors follow a consistent structure:
-
 ```json
 {
   "error": true,
@@ -303,7 +400,6 @@ All errors follow a consistent structure:
 ```
 
 Field-level validation errors return the field name as the key:
-
 ```json
 {
   "resolved_meter_serial": "Meter serial number does not match ticket record."
@@ -313,7 +409,6 @@ Field-level validation errors return the field name as the key:
 ---
 
 ## Status Flow
-
 ```
 pending  →  in_progress  →  resolved
 ```
