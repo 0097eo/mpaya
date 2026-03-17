@@ -48,6 +48,7 @@ export default function Sidebar() {
   }
 
   const isAdmin    = user?.role === 'admin'
+  const isSupport  = user?.role === 'support'
   const initials   = user?.username?.slice(0, 2).toUpperCase() || 'U'
   const path       = location.pathname
 
@@ -67,31 +68,36 @@ export default function Sidebar() {
       </div>
 
       {/* Nav */}
+      {/* Nav */}
       <div className="sidebar-section">
         <p className="sidebar-section-label">Workspace</p>
 
+        {/* Visible to both Admin and Support */}
         <SidebarItem
           icon={Icons.tickets}
           label="All Tickets"
           to="/tickets"
-          active={path == '/tickets'}
+          active={path === '/tickets'}
         />
 
+        {/* "New Ticket" visible to both roles, using consistent 'create' icon */}
+        {(isAdmin || isSupport) && (
+          <SidebarItem
+            icon={Icons.create}
+            label="New Ticket"
+            to="/tickets/create"
+            active={path === '/tickets/create'}
+          />
+        )}
+
+        {/* "Team" only visible to Admin */}
         {isAdmin && (
-          <>
-            <SidebarItem
-              icon={Icons.create}
-              label="New Ticket"
-              to="/tickets/create"
-              active={path === '/tickets/create'}
-            />
-            <SidebarItem
-              icon={Icons.technicians}
-              label="Technicians"
-              to="/technicians"
-              active={path === '/technicians'}
-            />
-          </>
+          <SidebarItem
+            icon={Icons.technicians}
+            label="Team"
+            to="/team"
+            active={path === '/team'}
+          />
         )}
       </div>
 
