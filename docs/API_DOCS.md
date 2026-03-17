@@ -236,13 +236,15 @@ List tickets.
 ### POST `/tickets/`
 Create a ticket. **Admin and Support only.**
 
+`assigned_to` is optional — tickets can be created unassigned and assigned later.
+
 **Request**
 ```json
 {
   "title": "Meter fault at Unit 4B",
   "description": "Tenant reports meter not vending tokens after payment.",
   "meter_serial_number": "MTR-2024-001",
-  "assigned_to": "<technician_user_uuid>"
+  "assigned_to": "" 
 }
 ```
 
@@ -253,7 +255,7 @@ Create a ticket. **Admin and Support only.**
   "title": "Meter fault at Unit 4B",
   "meter_serial_number": "MTR-2024-001",
   "status": "pending",
-  "assigned_to": "<uuid>",
+  "assigned_to": " or null",
   "created_at": "2026-03-16T08:00:00Z"
 }
 ```
@@ -264,6 +266,55 @@ Create a ticket. **Admin and Support only.**
 ```
 
 ---
+
+### PATCH `/tickets/{id}/assign/`
+Assign or reassign a technician. **Admin and Support only.**
+
+If the ticket is currently `in_progress`, it resets to `pending` on reassignment.
+Cannot reassign a resolved ticket.
+
+**Request**
+```json
+{ "assigned_to": "<technician_user_uuid>" }
+```
+
+**Response 200 — first assignment**
+```json
+{
+  "id": "uuid",
+  "assigned_to": {
+    "id": "uuid",
+    "username": "tech1",
+    "email": "tech1@mpaya.com"
+  },
+  "status": "pending",
+  "message": "Ticket assigned to tech1."
+}
+```
+
+**Response 200 — reassignment from in_progress**
+```json
+{
+  "id": "uuid",
+  "assigned_to": {
+    "id": "uuid",
+    "username": "tech2",
+    "email": "tech2@mpaya.com"
+  },
+  "status": "pending",
+  "message": "Ticket reassigned to tech2 and reset to pending."
+}
+```
+
+**Error 400** — ticket is resolved
+```json
+{ "error": true, "message": "Resolved tickets cannot be reassigned." }
+```
+
+**Error 404** — ticket not found
+```json
+{ "error": true, "message": "Ticket not found." }
+```
 
 ### GET `/tickets/{id}/`
 Get full ticket detail.
@@ -414,5 +465,8 @@ pending  →  in_progress  →  resolved
 ```
 
 - A ticket cannot skip from `pending` directly to `resolved`
-- A resolved ticket cannot be updated
+- A resolved ticket cannot be updated or reassigned
 - Only the assigned technician can update or resolve their ticket
+- A ticket must be assigned before a technician can act on it
+- Reassigning a ticket that is `in_progress` resets it to `pending`
+- Unassigned tickets are only visible to admin and support users
