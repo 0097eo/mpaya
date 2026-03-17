@@ -511,7 +511,7 @@ function TicketDetail({ ticket, detailLoading, onRefresh, onClose }) {
 
         <table className="prop-table">
           <tbody>
-            {(isAdmin || isSupport) && (
+            {(isAdmin) && (
               <PropRow label="Meter Serial">
                 <span className="prop-mono">{ticket.meter_serial_number}</span>
               </PropRow>
@@ -539,6 +539,9 @@ function TicketDetail({ ticket, detailLoading, onRefresh, onClose }) {
               </PropRow>
             )}
             <PropRow label="Created">{fmtFull(ticket.created_at)}</PropRow>
+            {ticket.assigned_at && (
+              <PropRow label="Assigned">{fmtFull(ticket.assigned_at)}</PropRow>
+            )}
             {isResolved && (
               <PropRow label="Resolved">{fmtFull(ticket.resolved_at)}</PropRow>
             )}
