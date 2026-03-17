@@ -6,8 +6,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from django.contrib.auth import get_user_model
-from apps.authentication.permissions import IsAdmin
-from .serializers import MPayaTokenSerializer, UserSerializer, LogoutSerializer, CreateTechnicianSerializer
+from apps.authentication.permissions import IsAdmin, IsAdminOrSupport
+from .serializers import MPayaTokenSerializer, UserSerializer, LogoutSerializer, CreateTechnicianSerializer, CreateSupportSerializer
 
 User = get_user_model()
 
@@ -49,7 +49,7 @@ class TechnicianListCreateView(generics.ListCreateAPIView):
     GET  — Admin lists all technicians
     POST — Admin creates a new technician account
     """
-    permission_classes = [IsAuthenticated, IsAdmin]
+    permission_classes = [IsAuthenticated, IsAdminOrSupport]
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -71,3 +71,42 @@ class TechnicianDetailView(generics.RetrieveDestroyAPIView):
     permission_classes = [IsAuthenticated, IsAdmin]
     serializer_class = UserSerializer
     queryset = User.objects.filter(role=User.TECHNICIAN)
+
+
+class SupportUserListCreateView(generics.ListCreateAPIView):
+    """
+    GET  — Admin lists support users
+    POST — Admin creates a new support user account
+    """
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return CreateSupportSerializer
+        return UserSerializer
+
+    def get_queryset(self):
+        return User.objects.filter(role=User.SUPPORT)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return Response(
+            UserSerializer(user).data,
+            status=status.HTTP_201_CREATED
+        )
+    
+class SupportUserDeactivateView(APIView):
+    """DELETE /tickets/support-users/{id}/deactivate/
+Admin only — deactivates a support user account (soft delete)"""
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def delete(self, request, pk):
+        try:
+            user = User.objects.get(pk=pk, role=User.SUPPORT)
+        except User.DoesNotExist:
+            return Response({'error': True, 'message': 'Support user not found.'}, status=status.HTTP_404_NOT_FOUND)
+        user.is_active = False
+        user.save()
+        return Response({'message': f'{user.username} has been deactivated.'})
