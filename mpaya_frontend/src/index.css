@@ -6,7 +6,7 @@
 
 @layer base {
   * { box-sizing: border-box; }
-  html { font-size: 14px; }
+  html { font-size: 18px; }
   body {
     font-family: 'DM Sans', sans-serif;
     background: #FAFAF8;
@@ -90,7 +90,7 @@
   /* ── Ticket list column ── */
   .list-column {
     @apply flex flex-col w-full md:w-80 shrink-0 border-r border-[#EAEAE4]
-           bg-[#FAFAF8] overflow-hidden;
+          bg-[#FAFAF8] overflow-hidden h-full;
   }
   .list-header {
     @apply px-4 py-3.5 border-b border-[#EAEAE4] flex items-center
@@ -120,7 +120,7 @@
     @apply bg-red-50 border-red-100 text-red-500;
   }
   .ticket-list {
-    @apply flex-1 overflow-y-auto divide-y divide-[#F0F0EA];
+    @apply flex-1 min-h-0 overflow-y-auto divide-y divide-[#F0F0EA];
   }
   .ticket-row {
     @apply px-4 py-3 cursor-pointer hover:bg-[#F0F0EA]
@@ -144,7 +144,7 @@
 
   /* ── Detail panel ── */
   .detail-panel {
-    @apply flex-col flex-1 overflow-hidden bg-white;
+    @apply flex flex-col flex-1 overflow-hidden bg-white h-full;
   }
   .detail-topbar {
     @apply flex items-center justify-between px-6 py-3.5
@@ -154,7 +154,7 @@
     @apply text-sm font-semibold text-[#1A1A18];
   }
   .detail-body {
-    @apply flex-1 overflow-y-auto px-6 py-5;
+    @apply flex-1 min-h-0 overflow-y-auto px-6 py-5;
   }
   .detail-title {
     @apply text-xl font-semibold text-[#1A1A18] leading-snug mb-5;
@@ -314,6 +314,10 @@
     @apply hidden md:flex;
   }
   .visible-mobile {
-    @apply flex fixed inset-0 z-40 bg-white md:relative md:inset-auto md:z-auto;
+    @apply flex flex-col fixed inset-0 z-40 bg-white md:relative md:inset-auto md:z-auto;
+  }
+  .input[type="date"] {
+    max-width: 100%;
+    box-sizing: border-box;
   }
 }
